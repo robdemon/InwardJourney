@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inward Journey — Neuro-Philosophical Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f3ef;--card:#ffffff;--text:#3a3632;--dim:#8a857e;--bright:#1c1a17;
+  --red:#dc4a3a;--amber:#c8850a;--green:#2a8c5a;--blue:#3672b8;--purple:#7048b8;
+  --pink:#c04a8a;--teal:#1a8a8a;--border:#e0ddd6;--accent:#d48c2a;
+  --card-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.6;padding:20px}
+
+.ctr{max-width:1060px;margin:0 auto}
+
+/* Header */
+.hdr{text-align:center;padding:24px 0 16px}
+.hdr .ey{font:400 11px/1 'JetBrains Mono',monospace;letter-spacing:4px;color:var(--dim);text-transform:uppercase}
+.hdr h1{font:500 28px/1.2 'DM Sans';color:var(--bright);margin:8px 0 4px}
+.hdr .sub{font:300 12px/1 'JetBrains Mono',monospace;color:var(--dim)}
+
+/* Upload zone */
+.uz{background:var(--card);border:2px dashed var(--border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:0.3s;margin-bottom:20px;box-shadow:var(--card-shadow)}
+.uz:hover{border-color:var(--accent);background:#fffcf5}
+.uz.drag{border-color:var(--green);background:#f0faf4}
+.uz.loaded{border-color:var(--green);border-style:solid;background:#f7fdf9}
+.uz input{display:none}
+
+/* Session bar */
+.stg{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.sb{padding:8px 16px;border-radius:8px;font:400 12px 'JetBrains Mono',monospace;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--dim);transition:0.2s}
+.sb.a{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 10px rgba(212,140,42,0.25)}
+.sb:hover:not(.a){border-color:var(--accent);color:var(--text)}
+
+/* Tabs */
+.tabs{display:flex;gap:3px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none;background:#eae7e1;border-radius:10px;padding:4px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:10px 18px;font:500 12px 'DM Sans',sans-serif;cursor:pointer;border-radius:7px;background:transparent;color:var(--dim);white-space:nowrap;transition:0.2s;letter-spacing:0.2px}
+.tab.a{background:var(--card);color:var(--bright);box-shadow:0 1px 4px rgba(0,0,0,0.08);font-weight:600}
+.tab:hover:not(.a){color:var(--text);background:rgba(255,255,255,0.5)}
+
+/* Stats row */
+.sr{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:18px}
+.st{background:var(--card);border-radius:10px;padding:14px 16px;text-align:center;border:1px solid var(--border);box-shadow:var(--card-shadow)}
+.st .v{font:600 22px 'JetBrains Mono',monospace}
+.st .l{font:500 10px/1.2 'DM Sans';color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;margin-top:5px}
+.st .desc{font:400 11px/1.3 'DM Sans';color:var(--dim);margin-top:3px}
+
+/* Cards */
+.cd{background:var(--card);border-radius:12px;padding:20px;margin-bottom:14px;border:1px solid var(--border);box-shadow:var(--card-shadow)}
+.cd h3{font:500 11px/1 'JetBrains Mono',monospace;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px}
+.cd h4{font:500 16px/1.3 'DM Sans';color:var(--bright);margin-bottom:8px}
+.cd .desc{font:400 13px/1.7 'DM Sans';color:var(--dim);margin-bottom:10px}
+
+/* Grids */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* Chart wrapper — FIXED HEIGHT */
+.cw{position:relative;height:220px;margin:8px 0}
+
+/* Formula code */
+.fb{background:#f9f7f3;border-radius:8px;padding:12px 16px;font:400 12px/1.7 'JetBrains Mono',monospace;color:var(--blue);border:1px solid var(--border);margin:8px 0;white-space:pre-wrap;overflow-x:auto}
+
+/* Insight boxes */
+.ins{padding:14px 16px;background:#faf8f4;border-radius:10px;margin:10px 0;border-left:4px solid var(--accent);font:400 13px/1.7 'DM Sans';color:var(--text)}
+.ins b,.ins strong{color:var(--bright);font-weight:600}
+
+/* Section headings */
+.sec{margin-bottom:24px}
+.sec>h2{font:500 18px/1 'DM Sans';color:var(--bright);margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border)}
+
+/* Pill badges */
+.pill{display:inline-block;padding:3px 12px;border-radius:12px;font:500 11px 'DM Sans'}
+
+/* Tables */
+.sgt{width:100%;border-collapse:collapse;font:400 12px 'DM Sans'}
+.sgt th{text-align:left;padding:8px 10px;color:var(--dim);border-bottom:2px solid var(--border);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+.sgt td{padding:8px 10px;border-bottom:1px solid #eee}
+
+/* Guna cards */
+.gc{padding:16px;background:#faf8f4;border-radius:10px;border-left:4px solid}
+.gc .gn{font:600 15px 'DM Sans';margin-bottom:2px}
+.gc .gd{font:400 12px/1.5 'DM Sans';color:var(--dim)}
+.gc .gv{font:600 22px 'JetBrains Mono';margin-top:8px}
+.gc .gb{height:6px;border-radius:3px;background:#e8e5de;margin-top:8px;overflow:hidden}
+.gc .gb>div{height:100%;border-radius:3px;transition:width 0.5s}
+
+/* Landing */
+.landing{text-align:center;padding:60px 20px;color:var(--dim)}
+.landing p{font:400 15px/1.7 'DM Sans';max-width:460px;margin:0 auto}
+
+/* Purusha-Prakriti stack */
+.pp-stack{display:flex;flex-direction:column;gap:0;margin:12px 0}
+.pp-row{display:flex;align-items:center;gap:14px;padding:14px 18px;border:1px solid var(--border);position:relative;background:var(--card)}
+.pp-row:first-child{border-radius:10px 10px 0 0}
+.pp-row:last-child{border-radius:0 0 10px 10px}
+.pp-row:not(:last-child){border-bottom:none}
+.pp-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.pp-info{flex:1;min-width:0}
+.pp-name{font:600 14px 'DM Sans';margin-bottom:2px}
+.pp-sub{font:400 11px/1.4 'DM Sans';color:var(--dim)}
+.pp-val{text-align:right;min-width:85px}
+.pp-num{font:600 17px 'JetBrains Mono'}
+.pp-bar{width:85px;height:5px;border-radius:3px;background:#e8e5de;margin-top:4px}
+.pp-bar>div{height:100%;border-radius:3px}
+
+/* Tooltip */
+.iw{display:inline-flex;align-items:center;gap:4px}
+.ii{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#eae7e1;color:var(--dim);font:500 9px 'JetBrains Mono';cursor:help;position:relative;flex-shrink:0;transition:0.2s;border:1px solid var(--border)}
+.ii:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ii .tt{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);font:400 12px/1.5 'DM Sans',sans-serif;padding:12px 16px;border-radius:10px;width:260px;z-index:100;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,0.12);text-transform:none;letter-spacing:0;white-space:normal;pointer-events:none}
+.ii .tt::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--card)}
+.ii:hover .tt{display:block}
+
+@media(max-width:768px){.g2,.g3{grid-template-columns:1fr}.sr{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="ctr">
+<div class="hdr">
+<div class="ey">Muse S EEG &times; Yogic Framework</div>
+<h1>Inward Journey Detector</h1>
+<div class="sub">Muse S Athena &bull; Mind Monitor CSV</div>
+</div>
+
+<div class="uz" id="dz" onclick="document.getElementById('fi').click()">
+<div style="font-size:36px;margin-bottom:8px;opacity:0.7">&#x1F9E0;</div>
+<div class="label" style="font-size:15px;color:var(--text)">Drop your Muse Mind Monitor CSV here, or click to browse</div>
+<div style="font:300 11px 'JetBrains Mono',monospace;color:var(--dim);margin-top:8px">Accepts .csv exports &bull; All processing happens in your browser</div>
+<input type="file" id="fi" accept=".csv">
+</div>
+
+<div class="stg" id="sessBar"></div>
+<div class="tabs" id="tabBar"></div>
+<div id="statsBar"></div>
+<div id="panels">
+<div class="landing"><div style="font-size:48px;margin-bottom:16px;opacity:0.4">&#x1F54A;</div><p>Upload a meditation session CSV to see your brainwave data analyzed through Yogic, S&#x101;&#x1E43;khya, Pata&ntilde;jali, and Kashmir &#x15A;aivism frameworks</p></div>
+</div>
+</div>
+
+<script>
+var C={red:'#dc4a3a',amber:'#c8850a',green:'#2a8c5a',blue:'#3672b8',purple:'#7048b8',pink:'#c04a8a',teal:'#1a8a8a'};
+var CC={};CC["K\u1e63ipta"]=C.red;CC["M\u016b\u1e0dha"]='#8a857e';CC["Vik\u1e63ipta"]=C.amber;CC["Ek\u0101gra"]=C.green;CC["Niruddha"]=C.purple;
+var sessions=[],labels=[],cur=0,tab=0,charts={};
+function sigmoid(x){return 1/(1+Math.exp(-5*Math.max(-10,Math.min(10,x))));}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+function I(label,tip){return '<span class="iw">'+label+'<span class="ii">?<span class="tt">'+tip+'</span></span></span>';}
+
+var dz=document.getElementById('dz'),fi=document.getElementById('fi');
+dz.ondragover=function(e){e.preventDefault();dz.classList.add('drag')};
+dz.ondragleave=function(){dz.classList.remove('drag')};
+dz.ondrop=function(e){e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])processCSV(e.dataTransfer.files[0])};
+fi.onchange=function(e){if(e.target.files[0])processCSV(e.target.files[0])};
+
+function processCSV(file){
+  dz.querySelector('.label').textContent='Processing '+file.name+'...';
+  Papa.parse(file,{header:true,dynamicTyping:true,skipEmptyLines:true,complete:function(r){
+    var rows=[],events=[],t0=null;
+    r.data.forEach(function(row){
+      var el=row.Elements||'';
+      if(el&&String(el).startsWith('/muse/')){events.push({time:row.TimeStamp,event:el});return;}
+      if(row.Delta_TP9==null)return;
+      try{
+        var d=(row.Delta_TP9+row.Delta_AF7+row.Delta_AF8+row.Delta_TP10)/4;
+        var th=(row.Theta_TP9+row.Theta_AF7+row.Theta_AF8+row.Theta_TP10)/4;
+        var a=(row.Alpha_TP9+row.Alpha_AF7+row.Alpha_AF8+row.Alpha_TP10)/4;
+        var b=(row.Beta_TP9+row.Beta_AF7+row.Beta_AF8+row.Beta_TP10)/4;
+        var g=(row.Gamma_TP9+row.Gamma_AF7+row.Gamma_AF8+row.Gamma_TP10)/4;
+        if(isNaN(d))return;
+        var ts=new Date(row.TimeStamp.replace(' ','T'));
+        if(!t0)t0=ts;
+        var gy=Math.sqrt(Math.pow(row.Gyro_X||0,2)+Math.pow(row.Gyro_Y||0,2)+Math.pow(row.Gyro_Z||0,2));
+        rows.push({min:+((ts-t0)/60000).toFixed(3),d:d,t:th,a:a,b:b,g:g,hr:row.Heart_Rate||0,gy:gy,
+          alpha_tp:(row.Alpha_TP9+row.Alpha_TP10)/2,alpha_af:(row.Alpha_AF7+row.Alpha_AF8)/2,
+          alpha_af7:row.Alpha_AF7||0,alpha_af8:row.Alpha_AF8||0,
+          theta_af:(row.Theta_AF7+row.Theta_AF8)/2,beta_af:(row.Beta_AF7+row.Beta_AF8)/2});
+      }catch(e){}
+    });
+    if(rows.length<10){alert('Not enough data rows (need at least 10)');return;}
+    var dur=rows[rows.length-1].min;
+    var blinks=events.filter(function(e){return e.event.indexOf('blink')>=0;});
+    var jw=events.filter(function(e){return e.event.indexOf('jaw')>=0;});
+    var nSeg=Math.max(1,Math.ceil(dur/5)),segSz=Math.floor(rows.length/nSeg),segs=[];
+    for(var i=0;i<nSeg;i++){
+      var sl=rows.slice(i*segSz,Math.min((i+1)*segSz,rows.length));
+      var avg=function(k){var s=0;for(var j=0;j<sl.length;j++)s+=(sl[j][k]||0);return s/sl.length;};
+      var std=function(k){var m=avg(k),s=0;for(var j=0;j<sl.length;j++)s+=Math.pow((sl[j][k]||0)-m,2);return Math.sqrt(s/sl.length);};
+      var sMin=sl[0].min,eMin=sl[sl.length-1].min;
+      var blk=0,jk=0;
+      blinks.forEach(function(bk){var bt=(new Date(bk.time.replace(' ','T'))-t0)/60000;if(bt>=sMin&&bt<eMin)blk++;});
+      jw.forEach(function(j2){var jt=(new Date(j2.time.replace(' ','T'))-t0)/60000;if(jt>=sMin&&jt<eMin)jk++;});
+      var a=avg('a'),b=avg('b'),th=avg('t'),dd=avg('d'),g=avg('g');
+      var hrm=avg('hr'),gyavg=avg('gy');
+      var tot=Math.abs(a)+Math.abs(b)+Math.abs(th)+Math.abs(dd)+Math.abs(g);
+      var cva=Math.abs(a)>0.01?std('a')/Math.abs(a):2;
+      var br=blk/Math.max(0.1,eMin-sMin),jr=jk/Math.max(0.1,eMin-sMin);
+      var hrv=[];for(var j=0;j<sl.length;j++)if(sl[j].hr>0)hrv.push(sl[j].hr);
+      var hrMin=hrv.length?Math.min.apply(null,hrv):0,hrMax=hrv.length?Math.max.apply(null,hrv):0;
+      var ba=a>0?Math.abs(b)/Math.max(0.01,Math.abs(a)):Math.abs(b)*10;
+      var ksh=0.35*clamp(ba/3,0,1)+0.25*clamp(br/20,0,1)+0.20*clamp(gyavg/50,0,1)+0.20*clamp(std('hr')/Math.max(1,hrm),0,1);
+      var mud=0.35*Math.abs(dd)/Math.max(0.01,tot)+0.30*sigmoid(th-a)+0.15*clamp(1-gyavg/5,0,1)+0.20*sigmoid(65-hrm);
+      if(a>0.05)mud*=0.3;
+      var cvok=clamp(1-cva,0,1);
+      var ek=0.25*(a>Math.max(b,th,g)&&a>0.05?1:0)+0.25*cvok+0.20*(b<0?1:0)+0.15*(gyavg<2?1:0)+0.15*(br<2?1:0);
+      var vik=0.50*clamp(cva/2,0,1)+0.25*(1-ksh)+0.25*(1-ek)*(a<0.01?0.5:1);
+      var nir=0.30*(th>=a&&a>0?1:0)+0.20*(Math.abs(dd)<0.1*Math.abs(th)&&Math.abs(th)>0.01?1:0)+0.15*sigmoid(hrm*0.85-hrm)+0.15*(gyavg<0.3?1:0);
+      var sc={};sc["K\u1e63ipta"]=ksh;sc["M\u016b\u1e0dha"]=mud;sc["Vik\u1e63ipta"]=vik;sc["Ek\u0101gra"]=ek;sc["Niruddha"]=nir;
+      var dom=Object.entries(sc).sort(function(x,y){return y[1]-x[1];})[0][0];
+      var pra=0.30*clamp(1-br/15,0,1)+0.15*clamp(1-jr/2,0,1)+0.25*clamp(1-gyavg/10,0,1)+0.30*sigmoid(avg('alpha_tp')-avg('alpha_af'));
+      var hrBase=segs.length>0?segs[0].hr_avg:hrm;
+      var eff=clamp((hrm-hrBase)/Math.max(1,hrBase),0,0.5);
+      var dha=ek>0.5&&eff>0.05?ek*(1+eff):0;
+      var bs=Math.abs(Math.min(0,b));
+      var dhy=0.25*cvok+0.25*(1-eff/0.5)+0.20*(ek>0.7?1:0)+0.15*bs+0.15*(i>0&&hrm<segs[i-1].hr_avg?1:0);
+      if(eff>=0.05||ek<=0.5)dhy*=0.3;
+      var sav=0.30*(th>=0.8*a&&a>0.01?1:0)+0.20*(dd<th?1:0)+0.20*clamp(1-Math.abs(avg('beta_af')),0,1)+0.15*(hrm<hrBase*0.9?1:0);
+      var mds=0.25*clamp(a,0,1)+0.20*clamp(cvok,0,1)+0.15*clamp(bs,0,1)+0.15*clamp(1-gyavg/50,0,1)+0.10*clamp(1-br/20,0,1)+0.10*clamp(1-(hrMax-hrMin)/Math.max(1,hrm),0,1)+0.05*clamp(Math.abs(Math.min(0,g)),0,1);
+      var rajas=0.4*Math.max(0,b)/Math.max(0.01,tot)+0.2*br/20+0.2*gyavg/20+0.2*clamp((hrm-60)/40,0,1);
+      var tamas=0.5*Math.max(0,dd)/Math.max(0.01,tot)*(a<0.05?1:0.3)+0.3*Math.max(0,1-a);
+      var sattva=0.35*Math.max(0,a)/Math.max(0.01,tot)+0.25*bs/Math.max(0.01,tot)+0.2*cvok+0.2*clamp(1-gyavg/10,0,1);
+      var af7=avg('alpha_af7'),af8=avg('alpha_af8');
+      var fai=1-Math.abs(af8-af7)/(Math.abs(af8)+Math.abs(af7)+0.001);
+      var gyMax=0;for(var j=0;j<sl.length;j++)if(sl[j].gy>gyMax)gyMax=sl[j].gy;
+      segs.push({seg:i+1,start:+sMin.toFixed(1),end:+eMin.toFixed(1),delta:+dd.toFixed(4),theta:+th.toFixed(4),alpha:+a.toFixed(4),beta:+b.toFixed(4),gamma:+g.toFixed(4),hr_avg:+hrm.toFixed(1),hr_min:+hrMin.toFixed(1),hr_max:+hrMax.toFixed(1),hr_std:+std('hr').toFixed(2),gyro_avg:+gyavg.toFixed(2),gyro_max:+gyMax.toFixed(1),blinks:blk,jaws:jk,blink_rate:+br.toFixed(1),cv_alpha:+cva.toFixed(3),alpha_pct:+(Math.abs(a)/tot*100).toFixed(1),fai:+fai.toFixed(3),kshipta:+ksh.toFixed(3),mudha:+mud.toFixed(3),vikshipta:+vik.toFixed(3),ekagra:+ek.toFixed(3),niruddha:+nir.toFixed(3),dominant_chitta:dom,pratyahara:+pra.toFixed(3),dharana:+dha.toFixed(3),dhyana:+dhy.toFixed(3),savitarka:+sav.toFixed(3),effort:+eff.toFixed(3),mds:+mds.toFixed(3),spi:0,rajas:+rajas.toFixed(3),tamas:+tamas.toFixed(3),sattva:+sattva.toFixed(3)});
+    }
+    function avg2(k){var s=0;for(var j=0;j<rows.length;j++)s+=(rows[j][k]||0);return s/rows.length;}
+    var betaNeg=0,gammaNeg=0;for(var j=0;j<rows.length;j++){if(rows[j].b<0)betaNeg++;if(rows[j].g<0)gammaNeg++;}
+    var hrAll=rows.map(function(r2){return r2.hr;}).filter(function(h){return h>0;});
+    var sess={label:file.name.replace(/\.csv$/i,''),duration:+dur.toFixed(1),n_rows:rows.length,blinks:blinks.length,jaws:jw.length,blink_rate:+(blinks.length/dur).toFixed(1),hr_mean:+(avg2('hr')).toFixed(1),hr_min:+Math.min.apply(null,hrAll).toFixed(1),hr_max:+Math.max.apply(null,hrAll).toFixed(1),bands:{delta:+avg2('d').toFixed(4),theta:+avg2('t').toFixed(4),alpha:+avg2('a').toFixed(4),beta:+avg2('b').toFixed(4),gamma:+avg2('g').toFixed(4)},segments:segs,beta_neg_pct:+(betaNeg/rows.length*100).toFixed(1),gamma_neg_pct:+(gammaNeg/rows.length*100).toFixed(1)};
+    sessions.push(sess);
+    var dateStr='';try{var ts0=r.data.find(function(r2){return r2.TimeStamp&&!(String(r2.Elements||'')).startsWith('/muse/');});if(ts0)dateStr=ts0.TimeStamp.split(' ')[0];}catch(e){}
+    labels.push((dateStr?dateStr+' \u2022 ':'')+dur.toFixed(0)+'min');
+    cur=sessions.length-1;buildSB();buildTB();render();
+    dz.querySelector('.label').innerHTML='\u2705 <b>'+file.name+'</b> \u2014 '+rows.length+' points, '+dur.toFixed(1)+' min';
+    dz.classList.add('loaded');
+  }});
+}
+
+function S(){return sessions[cur];}
+function buildSB(){if(!sessions.length)return;document.getElementById('sessBar').innerHTML=labels.map(function(l,i){return '<button class="sb'+(i===cur?' a':'')+'" onclick="cur='+i+';buildSB();render()">'+l+'</button>';}).join('');}
+function buildTB(){if(!sessions.length)return;var ts=['Yogic States','S\u0101\u1e43khya','Pata\u00f1jali YS','Kashmir \u015aaivism','Conclusion'];document.getElementById('tabBar').innerHTML=ts.map(function(t,i){return '<div class="tab'+(i===tab?' a':'')+'" onclick="tab='+i+';buildTB();render()">'+t+'</div>';}).join('');}
+function destroyCharts(){Object.values(charts).forEach(function(c){try{c.destroy();}catch(e){}});charts={};}
+function mc(id,tp,dt,op){
+  op=op||{};var el=document.getElementById(id);if(!el)return;
+  charts[id]=new Chart(el.getContext('2d'),{type:tp,data:dt,options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:op.legend!==false,labels:{color:'#6a655e',font:{size:11,family:'DM Sans'}}}},
+    scales:tp==='radar'?{r:{grid:{color:'#e0ddd6'},pointLabels:{color:'#5a554e',font:{size:11,family:'DM Sans'}},ticks:{display:false}}}:
+    tp==='doughnut'||tp==='pie'?{}:
+    {x:{grid:{color:'#eae7e1'},ticks:{color:'#6a655e',font:{size:10,family:'DM Sans'}}},
+     y:{grid:{color:'#eae7e1'},ticks:{color:'#6a655e',font:{size:10,family:'DM Sans'}}}}}});
+  if(op.scales){
+    var s2=charts[id].options.scales||{};
+    Object.keys(op.scales).forEach(function(k){s2[k]=Object.assign(s2[k]||{},op.scales[k]);});
+  }
+}
+function renderStats(){
+  if(!sessions.length)return;
+  var d=S(),ss=d.segments;
+  var avgMDS=ss.reduce(function(a,s){return a+s.mds;},0)/ss.length;
+  var avgEff=ss.reduce(function(a,s){return a+s.effort;},0)/ss.length;
+  var depth=avgMDS>0.6?'Deep':avgMDS>0.4?'Moderate':'Light';
+  var depthCol=avgMDS>0.6?C.green:avgMDS>0.4?C.amber:C.red;
+  var effLabel=avgEff<0.02?'Flow':avgEff<0.05?'Gentle':avgEff<0.15?'Effort':'Strain';
+  var effCol=avgEff<0.05?C.green:avgEff<0.15?C.amber:C.red;
+  var blDesc=d.blink_rate<2?'Near cessation \u2713':d.blink_rate<5?'Low \u2014 good withdrawal':d.blink_rate<10?'Moderate':d.blink_rate<15?'Elevated':'High \u2014 senses active';
+  document.getElementById('statsBar').innerHTML='<div class="sr">'+
+    '<div class="st"><div class="v" style="color:'+C.teal+'">'+d.duration+'<span style="font-size:12px">m</span></div><div class="l">'+I('Duration','Total length of the meditation session recording.')+'</div></div>'+
+    '<div class="st"><div class="v" style="color:'+C.green+'">'+d.bands.alpha.toFixed(3)+'</div><div class="l">'+I('Alpha Power','Average \u03b1 band (8\u201312 Hz). Higher = stronger calm, relaxed awareness.')+'</div></div>'+
+    '<div class="st"><div class="v" style="color:'+C.pink+'">'+d.hr_mean+'</div><div class="l">'+I('Heart Rate','Average BPM. Lower = parasympathetic dominance. Range: '+d.hr_min+'\u2013'+d.hr_max+'.')+'</div></div>'+
+    '<div class="st"><div class="v" style="color:'+C.amber+'">'+d.blink_rate+'<span style="font-size:12px">/m</span></div><div class="l">'+I('Blinks','Blinks per minute. Lower = deeper sensory withdrawal.')+'</div><div class="desc">'+blDesc+'</div></div>'+
+    '<div class="st"><div class="v" style="color:'+depthCol+'">'+depth+'</div><div class="l">'+I('Depth','MDS composite: \u03b1, stability, stillness, \u03b2 suppression, blinks, HR.')+'</div><div class="desc">MDS: '+avgMDS.toFixed(2)+'</div></div>'+
+    '<div class="st"><div class="v" style="color:'+effCol+'">'+effLabel+'</div><div class="l">'+I('Effort','HR elevation from baseline. Near zero = Dhy\u0101na. High = Dh\u0101ra\u1e47\u0101.')+'</div><div class="desc">'+(avgEff<0.05?'Dhy\u0101na mode':'Dh\u0101ra\u1e47\u0101 mode')+'</div></div></div>';
+}
+
+// ═══════════════════════ TAB 0: YOGIC STATES ═══════════════════════
+function t0(){
+  var d=S(),ss=d.segments;
+  var h='<div class="sec"><h2>Chitta Bh\u016bmis \u2014 States of Mind</h2>';
+  h+='<div class="cd"><div class="desc">The five states of citta from Vy\u0101sa\'s commentary on YS 1.1. K\u1e63ipta = scattered, Vik\u1e63ipta = oscillating, Ek\u0101gra = one-pointed, Niruddha = mastered.</div>';
+  h+='<div class="g2"><div><h3>'+I('State Scores','Stacked scores for each chitta bh\u016bmi per segment.')+'</h3><div class="cw"><canvas id="c0"></canvas></div></div>';
+  h+='<div><h3>'+I('Time in Each State','Proportion of session in each chitta state.')+'</h3><div class="cw"><canvas id="c1"></canvas></div></div></div></div>';
+  h+='<div class="cd"><h3>'+I('Session Journey','Each row is a ~5 min window showing dominant state, scores, and vitals.')+'</h3>';
+  h+='<table class="sgt"><tr><th>Seg</th><th>Time</th><th>State</th><th>'+I('Ek\u0101gra','One-pointedness score.')+'</th><th>'+I('MDS','Meditation Depth Score.')+'</th><th>'+I('Effort','HR elevation from baseline.')+'</th><th>Blinks</th><th>HR</th></tr>';
+  ss.forEach(function(s){h+='<tr><td>'+s.seg+'</td><td>'+s.start+'\u2013'+s.end+'m</td><td><span class="pill" style="background:'+(CC[s.dominant_chitta]||'#888')+'18;color:'+(CC[s.dominant_chitta]||'#888')+'">'+s.dominant_chitta+'</span></td><td>'+s.ekagra.toFixed(2)+'</td><td>'+s.mds.toFixed(2)+'</td><td>'+(s.effort<0.02?'\u2713':s.effort.toFixed(2))+'</td><td>'+s.blink_rate.toFixed(1)+'/m</td><td>'+s.hr_avg+'</td></tr>';});
+  h+='</table></div></div>';
+
+  h+='<div class="sec"><h2>A\u1e63\u1e6d\u0101\u1e45ga \u2014 Inner Limbs</h2>';
+  h+='<div class="cd"><div class="desc">Praty\u0101h\u0101ra (sense withdrawal) \u2192 Dh\u0101ra\u1e47\u0101 (effortful focus) \u2192 Dhy\u0101na (effortless flow). Effort index separates the last two.</div>';
+  h+='<div class="g2"><div><h3>'+I('Limb Activation','Scores for inner yoga limbs 5\u20138.')+'</h3><div class="cw"><canvas id="c2"></canvas></div></div>';
+  h+='<div><h3>'+I('Effort vs Ek\u0101gra','When Ek\u0101gra is high but effort is near zero = Dhy\u0101na.')+'</h3><div class="cw"><canvas id="c3"></canvas></div></div></div></div></div>';
+
+  h+='<div class="sec"><h2>Composite Metrics</h2>';
+  h+='<div class="g3"><div class="cd"><h3>'+I('Meditation Depth','MDS: 0\u20131 composite score.')+'</h3><div class="cw"><canvas id="c4"></canvas></div></div>';
+  h+='<div class="cd"><h3>'+I('Brainwave Bands','Average \u03b4, \u03b8, \u03b1, \u03b2, \u03b3 per segment.')+'</h3><div class="cw"><canvas id="c5"></canvas></div></div>';
+  h+='<div class="cd"><h3>'+I('Session Profile','Six key dimensions of meditation quality.')+'</h3><div class="cw"><canvas id="c6"></canvas></div></div></div></div>';
+  return h;
+}
+
+// ═══════════════════════ TAB 1: SAMKHYA ═══════════════════════
+function t1(){
+  var d=S(),ss=d.segments;
+  var avgSat=ss.reduce(function(a,s){return a+s.sattva;},0)/ss.length;
+  var avgRaj=ss.reduce(function(a,s){return a+s.rajas;},0)/ss.length;
+  var avgTam=ss.reduce(function(a,s){return a+s.tamas;},0)/ss.length;
+  var gt=avgSat+avgRaj+avgTam||1;
+  var h='<div class="sec"><h2>S\u0101\u1e43khya \u2014 Gu\u1e47a Dynamics</h2>';
+  h+='<div class="cd"><div class="desc">S\u0101\u1e43khya identifies three qualities (gu\u1e47as) constituting Prak\u1e5bti. Sattva (clarity) = \u03b1 dominance + stillness. Rajas (agitation) = \u03b2 + motion + HR. Tamas (inertia) = \u03b4 dominance without clarity.</div>';
+  h+='<div class="g3">';
+  h+='<div class="gc" style="border-color:'+C.green+'"><div class="gn" style="color:'+C.green+'">Sattva</div><div class="gd">Clarity, luminosity, balance</div><div class="gv" style="color:'+C.green+'">'+(avgSat/gt*100).toFixed(0)+'%</div><div class="gb"><div style="width:'+(avgSat/gt*100)+'%;background:'+C.green+'"></div></div></div>';
+  h+='<div class="gc" style="border-color:'+C.red+'"><div class="gn" style="color:'+C.red+'">Rajas</div><div class="gd">Activity, restlessness, desire</div><div class="gv" style="color:'+C.red+'">'+(avgRaj/gt*100).toFixed(0)+'%</div><div class="gb"><div style="width:'+(avgRaj/gt*100)+'%;background:'+C.red+'"></div></div></div>';
+  h+='<div class="gc" style="border-color:#8a857e"><div class="gn" style="color:#6a655e">Tamas</div><div class="gd">Inertia, dullness, darkness</div><div class="gv" style="color:#6a655e">'+(avgTam/gt*100).toFixed(0)+'%</div><div class="gb"><div style="width:'+(avgTam/gt*100)+'%;background:#8a857e"></div></div></div>';
+  h+='</div></div>';
+  h+='<div class="g2">';
+  h+='<div class="cd"><h3>'+I('Gu\u1e47a Balance Over Time','How sattva, rajas, and tamas shifted across segments.')+'</h3><div class="cw" style="height:240px"><canvas id="c7"></canvas></div></div>';
+  h+='<div class="cd"><h3>'+I('Buddhi Purity Index','Sattva / total gu\u1e47as per segment. Higher = clearer discrimination.')+'</h3><div class="cw" style="height:240px"><canvas id="c7b"></canvas></div></div>';
+  h+='</div>';
+  h+='<div class="cd"><h3>Segment Gu\u1e47a Breakdown</h3><table class="sgt"><tr><th>Seg</th><th>Sattva</th><th>Rajas</th><th>Tamas</th><th>Dominant</th><th>\u03b1</th><th>\u03b2</th><th>Motion</th></tr>';
+  ss.forEach(function(s){var g2=s.sattva+s.rajas+s.tamas||1;var dom=s.sattva>=s.rajas&&s.sattva>=s.tamas?'Sattva':s.rajas>=s.tamas?'Rajas':'Tamas';var dc=dom==='Sattva'?C.green:dom==='Rajas'?C.red:'#8a857e';h+='<tr><td>'+s.seg+'</td><td style="color:'+C.green+'">'+(s.sattva/g2*100).toFixed(0)+'%</td><td style="color:'+C.red+'">'+(s.rajas/g2*100).toFixed(0)+'%</td><td>'+(s.tamas/g2*100).toFixed(0)+'%</td><td><span class="pill" style="background:'+dc+'18;color:'+dc+'">'+dom+'</span></td><td>'+s.alpha.toFixed(3)+'</td><td>'+s.beta.toFixed(3)+'</td><td>'+s.gyro_avg.toFixed(1)+'\u00b0/s</td></tr>';});
+  h+='</table></div>';
+
+  // Purusha-Prakriti Framework
+  var buddhi_score=clamp(d.bands.alpha*2+Math.abs(Math.min(0,d.bands.beta)),0,1);
+  var ahankara_score=clamp(Math.max(0,d.bands.beta)*3+(1-d.beta_neg_pct/100),0,1);
+  var manas_score=clamp(d.blink_rate/20+(1-d.gamma_neg_pct/100),0,1);
+  var prakriti_quiet=clamp(1-ahankara_score*0.4-manas_score*0.3-clamp(Math.max(0,d.bands.beta),0,1)*0.3,0,1);
+  h+='<div class="cd"><h4 style="color:'+C.purple+'">Puru\u1e63a\u2013Prak\u1e5bti Framework</h4>';
+  h+='<div class="desc">EEG measures Prak\u1e5bti\'s modifications. Puru\u1e63a (pure awareness) is unmeasurable. As sattva rises, buddhi purifies and Puru\u1e63a\'s reflection becomes clearer.</div>';
+  h+='<div class="g2"><div>';
+  h+='<div class="pp-stack">';
+  h+='<div class="pp-row" style="background:linear-gradient(90deg,#f0eaf8,#faf8f4)"><div class="pp-icon" style="background:#e8e0f4;color:'+C.purple+'">\u2727</div><div class="pp-info"><div class="pp-name" style="color:'+C.purple+'">Puru\u1e63a</div><div class="pp-sub">Pure consciousness \u2014 the witness. Not measurable, inferred from Prak\u1e5bti quieting.</div></div><div class="pp-val"><div class="pp-num" style="color:'+C.purple+'">\u221e</div><div style="font:300 10px DM Sans;color:var(--dim)">Beyond EEG</div></div></div>';
+  h+='<div class="pp-row"><div class="pp-icon" style="background:'+C.blue+'15;color:'+C.blue+'">\u25c9</div><div class="pp-info"><div class="pp-name" style="color:'+C.blue+'">Buddhi</div><div class="pp-sub">Discriminative intelligence. \u03b1 coherence + \u03b2 suppression.</div></div><div class="pp-val"><div class="pp-num" style="color:'+C.blue+'">'+buddhi_score.toFixed(2)+'</div><div class="pp-bar"><div style="width:'+(buddhi_score*100)+'%;background:'+C.blue+'"></div></div></div></div>';
+  h+='<div class="pp-row"><div class="pp-icon" style="background:'+C.amber+'15;color:'+C.amber+'">\u25ce</div><div class="pp-info"><div class="pp-name" style="color:'+C.amber+'">Aha\u1e43k\u0101ra</div><div class="pp-sub">Ego-sense. Measured by \u03b2 activity.</div></div><div class="pp-val"><div class="pp-num" style="color:'+C.amber+'">'+ahankara_score.toFixed(2)+'</div><div class="pp-bar"><div style="width:'+(ahankara_score*100)+'%;background:'+C.amber+'"></div></div></div></div>';
+  h+='<div class="pp-row"><div class="pp-icon" style="background:'+C.teal+'15;color:'+C.teal+'">\u25cb</div><div class="pp-info"><div class="pp-name" style="color:'+C.teal+'">Manas</div><div class="pp-sub">Sensory mind. Blink rate + \u03b3 processing.</div></div><div class="pp-val"><div class="pp-num" style="color:'+C.teal+'">'+manas_score.toFixed(2)+'</div><div class="pp-bar"><div style="width:'+(manas_score*100)+'%;background:'+C.teal+'"></div></div></div></div>';
+  h+='<div class="pp-row" style="background:#faf8f4"><div class="pp-icon" style="background:#eae7e1;color:var(--dim)">\u25e6</div><div class="pp-info"><div class="pp-name" style="color:var(--dim)">5 J\u00f1\u0101nendriyas + 5 Tanm\u0101tras</div><div class="pp-sub">Sense organs and subtle elements. Pratyahara score indicates withdrawal.</div></div><div class="pp-val"><div class="pp-num" style="color:var(--dim)">'+(ss.reduce(function(a,s){return a+s.pratyahara;},0)/ss.length).toFixed(2)+'</div><div class="pp-bar"><div style="width:'+(ss.reduce(function(a,s){return a+s.pratyahara;},0)/ss.length*100)+'%;background:var(--dim)"></div></div></div></div>';
+  h+='</div></div>';
+  h+='<div><div class="cd" style="background:#faf8f4;text-align:center;padding:24px"><h3>Prak\u1e5bti Quieting</h3><div class="desc">How still is the mind-field? Higher = clearer reflection of Puru\u1e63a.</div><div style="font:600 42px JetBrains Mono;color:'+C.purple+';margin:14px 0">'+(prakriti_quiet*100).toFixed(0)+'<span style="font-size:16px;color:var(--dim)">%</span></div><div style="width:100%;height:8px;border-radius:4px;background:#e8e5de;overflow:hidden"><div style="width:'+(prakriti_quiet*100)+'%;height:100%;border-radius:4px;background:linear-gradient(90deg,'+C.blue+','+C.purple+')"></div></div><div style="font:400 11px DM Sans;color:var(--dim);margin-top:10px">\u03b2 negative: '+d.beta_neg_pct+'% \u2022 \u03b3 negative: '+d.gamma_neg_pct+'%</div></div>';
+  h+='<div class="cd" style="background:#faf8f4"><h3>Tattva Radar</h3><div class="cw" style="height:200px"><canvas id="c7c"></canvas></div></div>';
+  h+='</div></div></div></div>';
+  return h;
+}
+
+// ═══════════════════════ TAB 2: PATANJALI YS ═══════════════════════
+function t2(){
+  var d=S(),ss=d.segments;
+  var limbs=['Yama','Niyama','\u0100sana','Pr\u0101\u1e47\u0101y\u0101ma','Praty\u0101h\u0101ra','Dh\u0101ra\u1e47\u0101','Dhy\u0101na','Sam\u0101dhi'];
+  var avgEff=ss.reduce(function(a,s){return a+s.effort;},0)/ss.length;
+  var hasDhy=ss.some(function(s){return s.dhyana>0.3;});
+  var h='<div class="sec"><h2>Pata\u00f1jali Yoga S\u016btra Analysis</h2>';
+  h+='<div class="cd"><h4 style="color:'+C.green+'">YS 1.2: citta-v\u1e5btti-nirodha\u1e25</h4>';
+  h+='<div class="desc">Yoga = cessation of mental fluctuations. \u03b1 stability reflects reduced v\u1e5btti activity.</div>';
+  h+='<div class="g2"><div><h3>'+I('V\u1e5btti Activity','\u03b1% = calm-awareness share. CV\u00d7100 = instability \u2014 lower = steadier mind.')+'</h3><div class="cw"><canvas id="c8"></canvas></div></div>';
+  h+='<div style="padding:12px"><h3 style="font:500 11px JetBrains Mono;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px">Five V\u1e5bttis in EEG</h3>';
+  h+='<div style="font:400 13px/2.2 DM Sans;color:var(--text)">';
+  h+='<span style="color:'+C.blue+'">\u25cf Pram\u0101\u1e47a</span> (valid knowing) \u2192 \u03b2 frontal<br>';
+  h+='<span style="color:'+C.amber+'">\u25cf Viparyaya</span> (error) \u2192 \u03b2 + unstable \u03b1<br>';
+  h+='<span style="color:'+C.purple+'">\u25cf Vikalpa</span> (verbal) \u2192 \u03b2\u03b3 coupling<br>';
+  h+='<span style="color:#8a857e">\u25cf Nidr\u0101</span> (sleep) \u2192 \u03b4 dominance<br>';
+  h+='<span style="color:'+C.pink+'">\u25cf Sm\u1e5bti</span> (memory) \u2192 \u03b8 activity</div></div></div></div>';
+
+  h+='<div class="cd"><h4>Eight Limbs Position</h4>';
+  h+='<div class="desc">EEG places you on the inner limbs (5\u20138). Completed limbs shown with \u2713.</div>';
+  h+='<div style="display:flex;gap:4px;margin:14px 0">';
+  limbs.forEach(function(l,i){var dn=i<5,cu=i===5,em=i===6;var bg=cu?C.green+'20':em?C.purple+'15':dn?C.green+'10':'#eae7e1';var col=cu?C.green:em?C.purple:dn?C.green:'#8a857e';var brd=cu?'2px solid '+C.green:em?'1px dashed '+C.purple:'1px solid transparent';h+='<div style="flex:1;text-align:center"><div style="height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:'+bg+';border:'+brd+';font:600 10px JetBrains Mono;color:'+col+'">'+(dn&&!cu?'\u2713':i+1)+'</div><div style="font:400 9px DM Sans;margin-top:5px;color:'+col+'">'+l+'</div></div>';});
+  h+='</div>';
+  h+='<div class="ins" style="border-left-color:'+C.green+'">Primary: <strong>'+(avgEff<0.05?'Dhy\u0101na':'Dh\u0101ra\u1e47\u0101')+'</strong> (effort: '+avgEff.toFixed(3)+'). '+(hasDhy?'<strong style="color:'+C.purple+'">Dhy\u0101na</strong> in segments '+ss.filter(function(s){return s.dhyana>0.3;}).map(function(s){return s.seg;}).join(', ')+'.':'Dhy\u0101na not yet stable.')+'</div></div>';
+
+  h+='<div class="cd"><h3>'+I('Samyama Progression','Dh\u0101ra\u1e47\u0101, Dhy\u0101na, Sam\u0101dhi uniting on one object = samyama.')+'</h3>';
+  h+='<div class="cw"><canvas id="c9"></canvas></div></div></div>';
+  return h;
+}
+
+// ═══════════════════════ TAB 3: KASHMIR SHAIVISM ═══════════════════════
+function t3(){
+  var d=S(),ss=d.segments;
+  var avgSpanda=ss.reduce(function(a,s){return a+s.cv_alpha*Math.max(0,s.theta);},0)/ss.length;
+  var upays=[
+    {n:'\u0100\u1e47avop\u0101ya',s:'Individual effort',c:C.amber,d:'Body-level: breath, posture, kriya. EEG: settling phase, high motion \u2192 low.'},
+    {n:'\u015a\u0101ktop\u0101ya',s:'Energy / Mind',c:C.blue,d:'Mind-level: mantra, contemplation. EEG: Dh\u0101ra\u1e47\u0101 with effort, \u03b1 rising + elevated HR.'},
+    {n:'\u015a\u0101mbhavop\u0101ya',s:'Consciousness / Will',c:C.green,d:'Recognition through will alone. EEG: Dhy\u0101na, effortless \u03b1, zero effort index.'},
+    {n:'Anup\u0101ya',s:'Grace / No-path',c:C.purple,d:'Spontaneous recognition. Beyond measurement \u2014 the mirror cannot reflect itself.'}
+  ];
+  var h='<div class="sec"><h2>Kashmir \u015aaivism</h2>';
+  h+='<div class="cd"><h4 style="color:'+C.pink+'">Four Up\u0101yas</h4>';
+  h+='<div class="desc">Four paths of recognition from most effortful to spontaneous. EEG reveals which up\u0101ya is active.</div>';
+  h+='<div class="g2"><div>';
+  upays.forEach(function(u){h+='<div style="padding:14px;background:#faf8f4;border-radius:10px;border-left:4px solid '+u.c+';margin-bottom:10px"><div style="font:600 14px DM Sans;color:'+u.c+'">'+u.n+'</div><div style="font:400 11px DM Sans;color:var(--dim)">'+u.s+'</div><div style="font:400 12px/1.6 DM Sans;color:var(--text);margin-top:6px">'+u.d+'</div></div>';});
+  h+='</div><div>';
+  h+='<div class="cd" style="background:#faf8f4"><h3>'+I('Up\u0101ya Distribution','Which path dominated each segment.')+'</h3><div class="cw"><canvas id="c10"></canvas></div></div>';
+  h+='<div class="cd" style="background:#faf8f4"><h3>'+I('Spanda Index','CV(\u03b1) \u00d7 \u03b8. The vibration of consciousness.')+'</h3><div style="font:600 26px JetBrains Mono;color:'+C.teal+';margin:10px 0">'+avgSpanda.toFixed(4)+'</div></div>';
+  h+='</div></div></div>';
+
+  h+='<div class="cd"><h4 style="color:'+C.teal+'">5 Ka\u00f1cukas \u2192 EEG</h4>';
+  h+='<div class="desc">M\u0101y\u0101\'s five coverings that limit infinite consciousness, mapped to EEG dimensions.</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px">';
+  var kanc=[
+    {n:'Kal\u0101',s:'Limited agency',v:d.bands.beta.toFixed(3),c:C.amber,band:'\u03b2'},
+    {n:'Vidy\u0101',s:'Limited knowing',v:d.bands.gamma.toFixed(3),c:C.pink,band:'\u03b3'},
+    {n:'R\u0101ga',s:'Attachment',v:(d.hr_max-d.hr_min).toFixed(0)+' bpm',c:C.red,band:'HR var'},
+    {n:'K\u0101la',s:'Time',v:d.bands.alpha.toFixed(3),c:C.green,band:'\u03b1'},
+    {n:'Niyati',s:'Space',v:ss[0].fai.toFixed(2),c:C.blue,band:'FAI'}
+  ];
+  kanc.forEach(function(k){h+='<div style="padding:12px;background:#faf8f4;border-radius:10px;text-align:center;border:1px solid var(--border)"><div style="font:600 12px DM Sans;color:'+k.c+'">'+k.n+'</div><div style="font:400 10px DM Sans;color:var(--dim)">'+k.s+'</div><div style="font:600 16px JetBrains Mono;color:'+k.c+';margin-top:8px">'+k.v+'</div><div style="font:400 10px JetBrains Mono;color:var(--dim)">'+k.band+'</div></div>';});
+  h+='</div></div></div>';
+  return h;
+}
+
+// ═══════════════════════ TAB 4: CONCLUSION ═══════════════════════
+function t4(){
+  var d=S(),ss=d.segments;
+  var ae=ss.reduce(function(a,s){return a+s.effort;},0)/ss.length;
+  var ep=ss.filter(function(s){return s.dominant_chitta==='Ek\u0101gra';}).length/ss.length*100;
+  var peakAlpha=Math.max.apply(null,ss.map(function(s){return s.alpha;}));
+  var avgMDS=ss.reduce(function(a,s){return a+s.mds;},0)/ss.length;
+  var h='<div class="sec"><h2>Session Conclusions</h2>';
+  h+='<div class="cd"><h4 style="color:'+C.green+'">What Happened</h4><div style="font:400 14px/1.9 DM Sans;color:var(--text)">';
+  h+='<p><strong>Duration:</strong> '+d.duration+' min, '+ss.length+' segments.</p>';
+  h+='<p><strong>Mind state:</strong> '+ep.toFixed(0)+'% Ek\u0101gra. '+(ss[0].dominant_chitta==='Vik\u1e63ipta'?'Began oscillating.':ss[0].dominant_chitta==='Ek\u0101gra'?'Entered Ek\u0101gra immediately \u2014 strong carry-over.':'Opening was scattered.')+'</p>';
+  h+='<p><strong>Alpha:</strong> '+d.bands.alpha.toFixed(3)+', peak '+peakAlpha.toFixed(3)+'. '+(d.bands.alpha>0.3?'Strong calm-awareness.':d.bands.alpha>0.15?'Moderate awareness.':'Low alpha.')+'</p>';
+  h+='<p><strong>Heart rate:</strong> '+d.hr_mean+' bpm ('+d.hr_min+'\u2013'+d.hr_max+'). '+(d.hr_mean<65?'Deep parasympathetic rest.':d.hr_mean<80?'Calm.':'Elevated \u2014 effort present.')+'</p>';
+  h+='<p><strong>Effort:</strong> '+ae.toFixed(3)+'. '+(ae<0.02?'Effortless \u2014 Dhy\u0101na.':ae<0.05?'Near-effortless.':ae<0.15?'Moderate \u2014 Dh\u0101ra\u1e47\u0101.':'High effort.')+'</p>';
+  h+='<p><strong>Blinks:</strong> '+d.blink_rate+'/min. '+(d.blink_rate<2?'Near-cessation.':d.blink_rate<5?'Low \u2014 good withdrawal.':d.blink_rate<10?'Moderate.':'Elevated.')+'</p>';
+  h+='<p><strong>Beta:</strong> '+d.bands.beta.toFixed(3)+'. '+(d.beta_neg_pct>60?'Sustained suppression.':d.beta_neg_pct>30?'Partial suppression ('+d.beta_neg_pct+'%).':'Analytical mind active.')+'</p>';
+  h+='</div></div>';
+
+  h+='<div class="cd"><h4 style="color:'+C.amber+'">Key Observations</h4><div style="font:400 13px/1.7 DM Sans">';
+  if(ae>0.1)h+='<div class="ins" style="border-left-color:'+C.amber+'"><strong>Effort elevated ('+ae.toFixed(2)+').</strong> Try resting in awareness. YS 2.47: perfection through relaxation of effort.</div>';
+  if(ae<0.03&&ss.some(function(s){return s.ekagra>0.5;}))h+='<div class="ins" style="border-left-color:'+C.green+'"><strong>Effortless awareness achieved.</strong> Ek\u0101gra with near-zero effort \u2014 the Dh\u0101ra\u1e47\u0101\u2192Dhy\u0101na transition.</div>';
+  if(d.blink_rate>10)h+='<div class="ins" style="border-left-color:'+C.teal+'"><strong>Blinks elevated ('+d.blink_rate+'/min).</strong> Settle eyes before concentration.</div>';
+  if(d.blink_rate<5&&d.blink_rate>0)h+='<div class="ins" style="border-left-color:'+C.green+'"><strong>Low blinks ('+d.blink_rate+'/min).</strong> Praty\u0101h\u0101ra establishing.'+(d.blink_rate<2?' Near-cessation.':'')+'</div>';
+  if(d.hr_max>100)h+='<div class="ins" style="border-left-color:'+C.red+'"><strong>HR spike '+d.hr_max+' bpm.</strong> Reduce concentration intensity.</div>';
+  if(d.hr_mean<65)h+='<div class="ins" style="border-left-color:'+C.green+'"><strong>Low HR ('+d.hr_mean+' bpm).</strong> Deep parasympathetic rest.</div>';
+  if(d.gamma_neg_pct>90)h+='<div class="ins" style="border-left-color:'+C.purple+'"><strong>\u03b3 deeply suppressed ('+d.gamma_neg_pct+'% negative).</strong> Cognitive processing minimized.</div>';
+  h+='</div></div>';
+
+  h+='<div class="cd"><h4 style="color:'+C.purple+'">Path Forward</h4><div style="font:400 14px/2 DM Sans;color:var(--text)">';
+  h+='<p><strong style="color:'+C.green+'">1.</strong> '+(ae>0.1?'Reduce effort \u2192 \u015a\u0101mbhavop\u0101ya.':'Maintain this effortless approach.')+'</p>';
+  h+='<p><strong style="color:'+C.blue+'">2.</strong> '+(d.duration<25?'Extend to 30\u201345 min. Deep states emerge after min 25.':'Good duration.')+'</p>';
+  h+='<p><strong style="color:'+C.teal+'">3.</strong> '+(d.blink_rate>5?'Target blink cessation (<2/min).':'Blink control is good \u2014 observe if cessation windows extend.')+'</p>';
+  h+='<p><strong style="color:'+C.purple+'">4.</strong> '+(d.beta_neg_pct<50?'Beta suppression is the next frontier.':'Beta suppression progressing.')+'</p>';
+  h+='<p><strong style="color:'+C.pink+'">5.</strong> VBT dh\u0101ra\u1e47\u0101: rest in the gap between breaths.</p>';
+  h+='</div></div></div>';
+  return h;
+}
+
+// ═══════════════════════ CHART RENDERING ═══════════════════════
+function renderCharts(){
+  if(!sessions.length)return;
+  destroyCharts();
+  var d=S(),ss=d.segments,ls=ss.map(function(s){return 'Seg '+s.seg;});
+  if(tab===0){
+    mc('c0','bar',{labels:ls,datasets:[{label:'K\u1e63ipta',data:ss.map(function(s){return s.kshipta;}),backgroundColor:C.red+'80'},{label:'Vik\u1e63ipta',data:ss.map(function(s){return s.vikshipta;}),backgroundColor:C.amber+'80'},{label:'Ek\u0101gra',data:ss.map(function(s){return s.ekagra;}),backgroundColor:C.green+'80'},{label:'Niruddha',data:ss.map(function(s){return s.niruddha;}),backgroundColor:C.purple+'80'}]},{scales:{x:{stacked:true},y:{stacked:true,max:1.5}}});
+    var ct={};ss.forEach(function(s){ct[s.dominant_chitta]=(ct[s.dominant_chitta]||0)+1;});
+    mc('c1','doughnut',{labels:Object.keys(ct),datasets:[{data:Object.values(ct),backgroundColor:Object.keys(ct).map(function(k){return CC[k]||'#888';}),borderWidth:2,borderColor:'#ffffff'}]});
+    mc('c2','bar',{labels:ls,datasets:[{label:'Praty\u0101h\u0101ra',data:ss.map(function(s){return s.pratyahara;}),backgroundColor:C.teal+'80'},{label:'Dh\u0101ra\u1e47\u0101',data:ss.map(function(s){return s.dharana;}),backgroundColor:C.blue+'80'},{label:'Dhy\u0101na',data:ss.map(function(s){return s.dhyana;}),backgroundColor:C.green+'80'},{label:'Savitarka',data:ss.map(function(s){return s.savitarka;}),backgroundColor:C.purple+'80'}]});
+    mc('c3','line',{labels:ls,datasets:[{label:'Effort',data:ss.map(function(s){return s.effort;}),borderColor:C.amber,backgroundColor:C.amber+'15',fill:true,tension:0.3},{label:'Ek\u0101gra',data:ss.map(function(s){return s.ekagra;}),borderColor:C.green,fill:false,tension:0.3}]});
+    mc('c4','bar',{labels:ls,datasets:[{label:'MDS',data:ss.map(function(s){return s.mds;}),backgroundColor:ss.map(function(s){return s.mds>0.6?C.green+'90':s.mds>0.4?C.amber+'90':C.red+'90';}),borderRadius:4}]},{scales:{y:{max:1}}});
+    mc('c5','bar',{labels:ls,datasets:[{label:'\u03b4',data:ss.map(function(s){return s.delta;}),backgroundColor:'#7048b880'},{label:'\u03b8',data:ss.map(function(s){return s.theta;}),backgroundColor:C.teal+'80'},{label:'\u03b1',data:ss.map(function(s){return s.alpha;}),backgroundColor:C.green+'80'},{label:'\u03b2',data:ss.map(function(s){return s.beta;}),backgroundColor:C.amber+'80'},{label:'\u03b3',data:ss.map(function(s){return s.gamma;}),backgroundColor:C.red+'80'}]});
+    var av={a:ss.reduce(function(a2,s){return a2+s.alpha;},0)/ss.length,st:ss.reduce(function(a2,s){return a2+clamp(1-s.cv_alpha,0,1);},0)/ss.length,sl:ss.reduce(function(a2,s){return a2+clamp(1-s.gyro_avg/10,0,1);},0)/ss.length,pr:ss.reduce(function(a2,s){return a2+s.pratyahara;},0)/ss.length,ek:ss.reduce(function(a2,s){return a2+s.ekagra;},0)/ss.length,ef:ss.reduce(function(a2,s){return a2+clamp(1-s.effort*4,0,1);},0)/ss.length};
+    mc('c6','radar',{labels:['Alpha','Stability','Stillness','Pratyahara','Ek\u0101gra','Effortless'],datasets:[{label:'Session',data:Object.values(av),borderColor:C.purple,backgroundColor:C.purple+'20',pointBackgroundColor:C.purple}]});
+  }
+  if(tab===1){
+    mc('c7','line',{labels:ls,datasets:[{label:'Sattva',data:ss.map(function(s){return s.sattva;}),borderColor:C.green,backgroundColor:C.green+'15',fill:true,tension:0.3},{label:'Rajas',data:ss.map(function(s){return s.rajas;}),borderColor:C.red,fill:false,tension:0.3},{label:'Tamas',data:ss.map(function(s){return s.tamas;}),borderColor:'#8a857e',fill:false,tension:0.3,borderDash:[4,4]}]});
+    mc('c7b','bar',{labels:ls,datasets:[{label:'Buddhi Purity',data:ss.map(function(s){var g2=s.sattva+s.rajas+s.tamas;return g2?s.sattva/g2:0;}),backgroundColor:ss.map(function(s){var g2=s.sattva+s.rajas+s.tamas;var p=g2?s.sattva/g2:0;return p>0.5?C.green+'90':p>0.35?C.amber+'90':C.red+'90';}),borderRadius:4}]},{scales:{y:{max:1}}});
+    var buddhi_s=clamp(d.bands.alpha*2+Math.abs(Math.min(0,d.bands.beta)),0,1);
+    var ahank_s=clamp(Math.max(0,d.bands.beta)*3+(1-d.beta_neg_pct/100),0,1);
+    var manas_s=clamp(d.blink_rate/20+(1-d.gamma_neg_pct/100),0,1);
+    var pra_s=ss.reduce(function(a2,s){return a2+s.pratyahara;},0)/ss.length;
+    mc('c7c','radar',{labels:['Buddhi','Sattva','Pratyahara','Stillness','Ahankara\u207b','Manas\u207b'],datasets:[{label:'Inner Instruments',data:[buddhi_s,ss.reduce(function(a2,s){return a2+s.sattva;},0)/ss.length,pra_s,ss.reduce(function(a2,s){return a2+clamp(1-s.gyro_avg/10,0,1);},0)/ss.length,1-ahank_s,1-manas_s],borderColor:C.purple,backgroundColor:C.purple+'20',pointBackgroundColor:C.purple}]});
+  }
+  if(tab===2){
+    mc('c8','bar',{labels:ls,datasets:[{label:'Alpha %',data:ss.map(function(s){return s.alpha_pct;}),backgroundColor:C.green+'80',borderRadius:4},{label:'Instability (CV\u00d7100)',data:ss.map(function(s){return s.cv_alpha*100;}),backgroundColor:C.amber+'40',borderRadius:4}]},{scales:{y:{max:100}}});
+    mc('c9','line',{labels:ls,datasets:[{label:'Dh\u0101ra\u1e47\u0101',data:ss.map(function(s){return s.dharana;}),borderColor:C.blue,tension:0.3},{label:'Dhy\u0101na',data:ss.map(function(s){return s.dhyana;}),borderColor:C.green,tension:0.3},{label:'Savitarka',data:ss.map(function(s){return s.savitarka;}),borderColor:C.purple,tension:0.3},{label:'Pratyahara',data:ss.map(function(s){return s.pratyahara;}),borderColor:C.teal,borderDash:[5,5],tension:0.3}]});
+  }
+  if(tab===3){
+    var up=ss.map(function(s){return{a:Math.max(0,1-s.pratyahara)*0.5+s.gyro_avg/20,sh:s.effort*s.ekagra,sm:s.dhyana*clamp(1-s.effort*2,0,1)};});
+    mc('c10','bar',{labels:ls,datasets:[{label:'\u0100\u1e47ava',data:up.map(function(u){return u.a;}),backgroundColor:C.amber+'80'},{label:'\u015a\u0101kta',data:up.map(function(u){return u.sh;}),backgroundColor:C.blue+'80'},{label:'\u015a\u0101mbhava',data:up.map(function(u){return u.sm;}),backgroundColor:C.green+'80'}]},{scales:{x:{stacked:true},y:{stacked:true}}});
+  }
+}
+
+function render(){
+  if(!sessions.length)return;
+  renderStats();
+  document.getElementById('panels').innerHTML=[t0,t1,t2,t3,t4][tab]();
+  setTimeout(renderCharts,60);
+}
+function wc(cb,n){n=n||0;if(typeof Chart!=='undefined'&&typeof Papa!=='undefined')cb();else if(n<50)setTimeout(function(){wc(cb,n+1);},100);}
+document.addEventListener('DOMContentLoaded',function(){wc(function(){});});
+</script>
+</body>
+</html>

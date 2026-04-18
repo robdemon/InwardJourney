@@ -1,0 +1,58 @@
+export const SIKHISM_CARDS = [
+  {
+    title: 'Nām Simran',
+    subtitle: 'Divine-name remembrance',
+    body: 'Continuous remembrance of Waheguru. Progresses verbal → sub-vocal → mental (ajapa). Each stage deepens θ coherence, raises α, lowers LF/HF. Heart coherence at ~6 bpm.',
+    formula: 'SimDI = 0.30·θ_coh + 0.30·Heart_coh + 0.20·Resp_reg + 0.20·Calm%\nTarget for sustained Nām: SimDI > 65',
+    reference: 'PLOS One (2017) — Himalayan Yoga mantra EEG. Frontiers Aging (2023) — Muse Kirtan Kriya, n=40.',
+    badge: { kind: 'reference', text: 'Needs coherence calc' },
+    accent: '#3672b8'
+  },
+  {
+    title: 'Gurbāṇī Kīrtan',
+    subtitle: 'Sacred hymn singing',
+    body: 'Singing from Gurū Granth Sāhib in classical Rāgas. Religious chanting EEG signature (α + θ ↑) distinct from silent meditation. Group singing adds inter-brain coherence.',
+    reference: 'PMC 2019 (Nature Scientific Reports) — neurophysiological correlates of religious chanting.',
+    badge: { kind: 'computed', text: 'α + θ from raw CSV' },
+    accent: '#c8850a'
+  },
+  {
+    title: 'Kīrtan Kriyā (Sa-Ta-Na-Ma)',
+    subtitle: '12-min multisensory practice',
+    body: 'Vocal → whispered → mental → whispered → vocal. UCLA/ARPF protocol. Muse EEG study (Frontiers 2023, n=40 incl. MCI) validates α+θ across phases and cognitive resilience improvement.',
+    reference: 'Frontiers Aging Neuroscience (2023) — Muse EEG Kirtan Kriya.',
+    badge: { kind: 'computed', text: 'Direct Muse validation' },
+    accent: '#c04a8a'
+  },
+  {
+    title: 'Sehaj Avasthā',
+    subtitle: 'State of equipoise',
+    body: 'Effortless, natural equipoise — haumai (ego) dissolved. Neural analog: resting θ+α coherence, DMN suppression, low MWI, high HRV.',
+    reference: 'NIMHANS bioRxiv (2025) — equanimity ↔ shorter ACW, balanced affect.',
+    badge: { kind: 'computed', text: 'Calm% + HRV + MWI' },
+    accent: '#7048b8'
+  },
+  {
+    title: 'Nitnem Bāṇīs',
+    subtitle: 'Daily prayer recitation',
+    body: 'Five daily prayers, rhythmic oral practice. Entrains α + θ; respiratory pacing drives HRV improvements.',
+    reference: 'Religious chanting meta-analysis. Rhythmic speech EEG entrainment literature.',
+    badge: { kind: 'reference', text: 'Analog mapping' },
+    accent: '#1a8a8a'
+  },
+  {
+    title: 'Sevā — Selfless service',
+    subtitle: 'Prosocial engagement',
+    body: 'Physical service without ego. Prosocial acts raise HRV (parasympathetic), left prefrontal α asymmetry (positive affect), lower cortisol.',
+    reference: 'Davidson (1992) — left frontal α asymmetry → positive affect.',
+    badge: { kind: 'computed', text: 'FAA + HRV' },
+    accent: '#2a8c5a'
+  }
+];
+
+export const SIKHISM_REFERENCES = [
+  'Frontiers Aging Neuroscience (2023) — Muse Kirtan Kriya, n=40.',
+  'PMC 2019 (Nature Sci Rep) — Religious chanting neurophysiology.',
+  'ResearchGate (2011) — Kirtan Kriya SPECT cerebral blood flow.',
+  'PLOS One (2017) — Himalayan Yoga mantra EEG (Naam Simran analog).'
+];

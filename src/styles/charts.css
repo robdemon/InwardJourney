@@ -1,0 +1,16 @@
+.cw { position: relative; height: 220px; margin: 8px 0; }
+.cw.tall { height: 240px; }
+.cw.short { height: 200px; }
+
+/* Formula block */
+.fb {
+  background: #f9f7f3;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font: 400 12px/1.7 'JetBrains Mono', monospace;
+  color: var(--blue);
+  border: 1px solid var(--border);
+  margin: 8px 0;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}

@@ -1,0 +1,30 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #f5f3ef;
+  --card: #ffffff;
+  --text: #3a3632;
+  --dim: #8a857e;
+  --bright: #1c1a17;
+  --red: #dc4a3a;
+  --amber: #c8850a;
+  --green: #2a8c5a;
+  --blue: #3672b8;
+  --purple: #7048b8;
+  --pink: #c04a8a;
+  --teal: #1a8a8a;
+  --border: #e0ddd6;
+  --accent: #d48c2a;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.6;
+  padding: 20px;
+}
+
+button { font-family: inherit; cursor: pointer; }
+a { color: var(--blue); }
