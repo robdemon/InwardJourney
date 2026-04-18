@@ -105,11 +105,15 @@ export default function PatanjaliTab({ session }) {
       <div className="sec">
         <h2>Metrics Library — Yoga Sūtras · Aṣṭāṅga · Hatha</h2>
         <div className="kgrid">
-          {PATANJALI_CARDS.map((card) => (
-            <KnowledgeCard key={card.title} {...card}>
-              {card.formula ? <FormulaBlock>{card.formula}</FormulaBlock> : null}
-            </KnowledgeCard>
-          ))}
+          {PATANJALI_CARDS.map((card) => {
+            const { compute, formula, ...rest } = card;
+            const derived = compute ? compute(session) : {};
+            return (
+              <KnowledgeCard key={card.title} {...rest} {...derived}>
+                {formula ? <FormulaBlock>{formula}</FormulaBlock> : null}
+              </KnowledgeCard>
+            );
+          })}
         </div>
         <div className="cd">
           <h3>Research References (selected)</h3>

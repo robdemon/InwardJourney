@@ -2,10 +2,10 @@ import KnowledgeCard from '../common/KnowledgeCard.jsx';
 import FormulaBlock from '../common/FormulaBlock.jsx';
 
 /**
- * Shared template for the "new" tradition tabs (Buddhism, Jainism, Sikhism, Taoism).
- * Each tab passes in its title, subtitle blurb, knowledge cards and references.
+ * Shared template for Buddhism, Jainism, Sikhism, Taoism tabs.
+ * Each card's optional compute(session) yields { value, valueLabel, interpretation }.
  */
-export default function TraditionTab({ title, blurb, cards, references }) {
+export default function TraditionTab({ title, blurb, cards, references, session }) {
   return (
     <div className="sec">
       <h2>{title}</h2>
@@ -13,11 +13,15 @@ export default function TraditionTab({ title, blurb, cards, references }) {
         <div className="desc">{blurb}</div>
       </div>
       <div className="kgrid">
-        {cards.map((card) => (
-          <KnowledgeCard key={card.title} {...card}>
-            {card.formula ? <FormulaBlock>{card.formula}</FormulaBlock> : null}
-          </KnowledgeCard>
-        ))}
+        {cards.map((card) => {
+          const { compute, formula, ...rest } = card;
+          const derived = compute && session ? compute(session) : {};
+          return (
+            <KnowledgeCard key={card.title} {...rest} {...derived}>
+              {formula ? <FormulaBlock>{formula}</FormulaBlock> : null}
+            </KnowledgeCard>
+          );
+        })}
       </div>
       <div className="cd">
         <h3>Research References</h3>

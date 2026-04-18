@@ -1,3 +1,7 @@
+const fmt = (n, d = 2) => (Number.isFinite(n) ? n.toFixed(d) : '—');
+
+const NA = { value: '—', valueLabel: 'not derivable from this CSV' };
+
 export const KASHMIR_CARDS = [
   {
     title: 'Pratyabhijñā — Recognition',
@@ -5,7 +9,8 @@ export const KASHMIR_CARDS = [
     body: 'Spontaneous recognition of one’s own Śiva-nature. EEG analogs: elevated δ + θ + α during reported nondual events, with γ as a session-level trait.',
     reference: 'Berman & Stevens (2015) — EEG Manifestations of Nondual Experiences.',
     badge: { kind: 'reference', text: 'NDA event ref.' },
-    accent: '#7048b8'
+    accent: '#7048b8',
+    compute: () => NA
   },
   {
     title: 'Spanda — Vibration',
@@ -14,7 +19,11 @@ export const KASHMIR_CARDS = [
     formula: 'Spanda_approx = CV(α) × max(0, θ)\nSpanda_full = mean(60–110 Hz γ) × log(practice_hours)',
     reference: 'PLOS One (2017, n=64) — γ trait across three traditions.',
     badge: { kind: 'computed', text: 'Approx from α CV + θ' },
-    accent: '#c04a8a'
+    accent: '#c04a8a',
+    compute: (s) => {
+      const spanda = s.segments.reduce((a, seg) => a + seg.cv_alpha * Math.max(0, seg.theta), 0) / s.segments.length;
+      return { value: fmt(spanda, 4), valueLabel: 'spanda approx', interpretation: spanda > 0.1 ? 'vibratory' : 'quiescent' };
+    }
   },
   {
     title: 'Four Upāyas',
@@ -23,7 +32,15 @@ export const KASHMIR_CARDS = [
     formula: 'Āṇava ≈ motion + (1 − pratyāhāra)\nŚākta ≈ effort × ekāgra\nŚāmbhava ≈ dhyāna × (1 − 2·effort)',
     reference: 'NIMHANS bioRxiv (2025, n=103) — ACW non-duality index in Isha meditators.',
     badge: { kind: 'computed', text: 'Upāya classifier' },
-    accent: '#c8850a'
+    accent: '#c8850a',
+    compute: (s) => {
+      const ss = s.segments;
+      const a = ss.reduce((acc, seg) => acc + Math.max(0, 1 - seg.pratyahara) * 0.5 + seg.gyro_avg / 20, 0) / ss.length;
+      const sh = ss.reduce((acc, seg) => acc + seg.effort * seg.ekagra, 0) / ss.length;
+      const sm = ss.reduce((acc, seg) => acc + seg.dhyana * Math.max(0, 1 - seg.effort * 2), 0) / ss.length;
+      const dom = sm >= sh && sm >= a ? 'Śāmbhava' : sh >= a ? 'Śākta' : 'Āṇava';
+      return { value: dom, valueLabel: 'dominant upāya', interpretation: `Āṇ ${fmt(a)} · Śāk ${fmt(sh)} · Śām ${fmt(sm)}` };
+    }
   },
   {
     title: 'ACW — Non-duality Index',
@@ -32,7 +49,8 @@ export const KASHMIR_CARDS = [
     formula: 'ACW_diff = ACW_internal − ACW_external\n≈0 (<50 ms) → Turīya signature · >>0 → dualistic',
     reference: 'NIMHANS bioRxiv (2025, n=103, 5507 avg practice hours). ScienceDirect (2024, Northoff).',
     badge: { kind: 'reference', text: 'Requires 2 tasks' },
-    accent: '#3672b8'
+    accent: '#3672b8',
+    compute: () => NA
   },
   {
     title: 'Five Kañcukas',
@@ -40,7 +58,18 @@ export const KASHMIR_CARDS = [
     body: 'Kalā (limited agency) → β. Vidyā (limited knowing) → γ. Rāga (attachment) → HR variability. Kāla (time) → α rhythm. Niyati (space) → frontal alpha asymmetry.',
     reference: 'Trika doctrinal mapping; proxies from Muse band literature.',
     badge: { kind: 'computed', text: 'All 5 computable' },
-    accent: '#1a8a8a'
+    accent: '#1a8a8a',
+    compute: (s) => {
+      const hrRange = s.hr_max - s.hr_min;
+      const covering = [
+        s.bands.beta > 0 ? 1 : 0,
+        s.bands.gamma > 0 ? 1 : 0,
+        hrRange > 15 ? 1 : 0,
+        s.bands.alpha < 0.1 ? 1 : 0,
+        Math.abs(s.segments[0].fai - 1) > 0.1 ? 1 : 0
+      ].reduce((a, c) => a + c, 0);
+      return { value: `${covering}/5`, valueLabel: 'kañcukas active', interpretation: covering <= 2 ? 'thinning' : 'dense' };
+    }
   },
   {
     title: 'Shoonya Gamma Index (SGI)',
@@ -49,7 +78,8 @@ export const KASHMIR_CARDS = [
     formula: 'SGI = γ(AF7,AF8) / γ(TP9,TP10)\nSGI > 1.2 → Shoonya-specific · ≈1.0 → general meditation γ · <0.8 → focused/mantra',
     reference: 'PLOS One (2017, n=64) — Isha Shoonya EEG. NIMHANS Isha Yoga (2024, n=103).',
     badge: { kind: 'reference', text: 'Needs γ channel split' },
-    accent: '#2a8c5a'
+    accent: '#2a8c5a',
+    compute: () => NA
   },
   {
     title: 'Cessation (Nirodha)',
@@ -58,7 +88,8 @@ export const KASHMIR_CARDS = [
     formula: 'cessation = (α_slope < −0.02) AND (γ_sync > 2 × baseline)',
     reference: 'PMC (2024) — Cessation EEG case study. bioRxiv (2025, n=5 adepts).',
     badge: { kind: 'reference', text: 'Event-level detection' },
-    accent: '#dc4a3a'
+    accent: '#dc4a3a',
+    compute: () => NA
   }
 ];
 

@@ -11,11 +11,14 @@
     "test": "node Test/runAll.mjs"
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "chart.js": "^4.4.3",
     "papaparse": "^5.4.1",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.2.0",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "three": "^0.165.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",

@@ -28,5 +28,7 @@ export const TAB_LIST = [
   { id: 'jainism', label: 'Jainism' },
   { id: 'sikhism', label: 'Sikhism' },
   { id: 'taoism', label: 'Taoism' },
+  { id: 'brain', label: '3D Brain' },
+  { id: 'yogi3d', label: '3D Yogi' },
   { id: 'conclusion', label: 'Conclusion' }
 ];

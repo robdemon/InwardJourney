@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import './scripts/chartSetup.js';
 import { parseMindMonitorCsv } from './scripts/csvParser.js';
 import { buildSession } from './scripts/metrics.js';
@@ -17,6 +17,9 @@ import JainismTab from './components/tabs/JainismTab.jsx';
 import SikhismTab from './components/tabs/SikhismTab.jsx';
 import TaoismTab from './components/tabs/TaoismTab.jsx';
 import ConclusionTab from './components/tabs/ConclusionTab.jsx';
+
+const BrainTab = lazy(() => import('./components/tabs/BrainTab.jsx'));
+const YogiTab = lazy(() => import('./components/tabs/YogiTab.jsx'));
 
 export default function App() {
   const [sessions, setSessions] = useState([]);
@@ -47,10 +50,20 @@ export default function App() {
       case 'samkhya': return <SamkhyaTab session={active} />;
       case 'patanjali': return <PatanjaliTab session={active} />;
       case 'kashmir': return <KashmirTab session={active} />;
-      case 'buddhism': return <BuddhismTab />;
-      case 'jainism': return <JainismTab />;
-      case 'sikhism': return <SikhismTab />;
-      case 'taoism': return <TaoismTab />;
+      case 'buddhism': return <BuddhismTab session={active} />;
+      case 'jainism': return <JainismTab session={active} />;
+      case 'sikhism': return <SikhismTab session={active} />;
+      case 'taoism': return <TaoismTab session={active} />;
+      case 'brain': return (
+        <Suspense fallback={<div className="cd">Loading 3D scene…</div>}>
+          <BrainTab session={active} />
+        </Suspense>
+      );
+      case 'yogi3d': return (
+        <Suspense fallback={<div className="cd">Loading 3D scene…</div>}>
+          <YogiTab session={active} />
+        </Suspense>
+      );
       case 'conclusion': return <ConclusionTab session={active} />;
       default: return null;
     }

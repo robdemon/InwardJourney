@@ -11,6 +11,21 @@
 .kcard .kb { font: 400 13px/1.7 'DM Sans'; color: var(--text); }
 .kcard .ref { font: 400 11px/1.5 'DM Sans'; color: var(--dim); margin-top: 8px; font-style: italic; }
 
+.kvalue {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f9f7f3;
+  border-radius: 8px;
+  margin: 8px 0;
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.kvalue .kvn { font: 600 24px 'JetBrains Mono', monospace; letter-spacing: -0.5px; }
+.kvalue .kvl { font: 400 11px 'JetBrains Mono', monospace; color: var(--dim); text-transform: uppercase; letter-spacing: 0.8px; }
+.kvalue .kvi { font: 500 11px 'DM Sans'; margin-left: auto; padding: 2px 10px; border-radius: 10px; background: rgba(255,255,255,0.6); }
+
 .kgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
 
 .badge {

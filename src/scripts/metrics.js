@@ -210,7 +210,13 @@ export function buildSession({ rows, events, t0, sourceName, firstDate }) {
       theta: +rowAvg('t').toFixed(4),
       alpha: +rowAvg('a').toFixed(4),
       beta: +rowAvg('b').toFixed(4),
-      gamma: +rowAvg('g').toFixed(4)
+      gamma: +rowAvg('g').toFixed(4),
+      alpha_af7: +rowAvg('alpha_af7').toFixed(4),
+      alpha_af8: +rowAvg('alpha_af8').toFixed(4),
+      alpha_tp: +rowAvg('alpha_tp').toFixed(4),
+      alpha_af: +rowAvg('alpha_af').toFixed(4),
+      theta_af: +rowAvg('theta_af').toFixed(4),
+      beta_af: +rowAvg('beta_af').toFixed(4)
     },
     segments: segs,
     beta_neg_pct: +(betaNeg / rows.length * 100).toFixed(1),
