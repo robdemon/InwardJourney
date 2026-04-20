@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Bar, Line, Radar } from 'react-chartjs-2';
 import { C } from '../../scripts/constants.js';
 import { segMean } from '../../scripts/metrics.js';
@@ -9,6 +10,7 @@ import FormulaBlock from '../common/FormulaBlock.jsx';
 import { SAMKHYA_CARDS, SAMKHYA_REFERENCES } from '../../data/samkhya.js';
 
 export default function SamkhyaTab({ session }) {
+  const [gunaOpen, setGunaOpen] = useState(false);
   const ss = session.segments;
   const ls = ss.map((s) => `Seg ${s.seg}`);
 
@@ -82,32 +84,40 @@ export default function SamkhyaTab({ session }) {
         </div>
 
         <div className="cd">
-          <h3>Segment Guṇa Breakdown</h3>
-          <table className="sgt">
-            <thead>
-              <tr><th>Seg</th><th>Sattva</th><th>Rajas</th><th>Tamas</th><th>Dominant</th><th>α</th><th>β</th><th>Motion</th></tr>
-            </thead>
-            <tbody>
-              {ss.map((s) => {
-                const tot = s.sattva + s.rajas + s.tamas || 1;
-                const dom = s.sattva >= s.rajas && s.sattva >= s.tamas ? 'Sattva'
-                  : s.rajas >= s.tamas ? 'Rajas' : 'Tamas';
-                const dc = dom === 'Sattva' ? C.green : dom === 'Rajas' ? C.red : '#8a857e';
-                return (
-                  <tr key={s.seg}>
-                    <td>{s.seg}</td>
-                    <td style={{ color: C.green }}>{(s.sattva / tot * 100).toFixed(0)}%</td>
-                    <td style={{ color: C.red }}>{(s.rajas / tot * 100).toFixed(0)}%</td>
-                    <td>{(s.tamas / tot * 100).toFixed(0)}%</td>
-                    <td><span className="pill" style={{ background: dc + '18', color: dc }}>{dom}</span></td>
-                    <td>{s.alpha.toFixed(3)}</td>
-                    <td>{s.beta.toFixed(3)}</td>
-                    <td>{s.gyro_avg.toFixed(1)}°/s</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <h3
+            onClick={() => setGunaOpen((o) => !o)}
+            style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: 8 }}
+          >
+            Segment Guṇa Breakdown
+            <span style={{ fontSize: 12, color: 'var(--dim)', fontWeight: 400 }}>{gunaOpen ? '▲ collapse' : '▼ expand'}</span>
+          </h3>
+          {gunaOpen && (
+            <table className="sgt">
+              <thead>
+                <tr><th>Seg</th><th>Sattva</th><th>Rajas</th><th>Tamas</th><th>Dominant</th><th>α</th><th>β</th><th>Motion</th></tr>
+              </thead>
+              <tbody>
+                {ss.map((s) => {
+                  const tot = s.sattva + s.rajas + s.tamas || 1;
+                  const dom = s.sattva >= s.rajas && s.sattva >= s.tamas ? 'Sattva'
+                    : s.rajas >= s.tamas ? 'Rajas' : 'Tamas';
+                  const dc = dom === 'Sattva' ? C.green : dom === 'Rajas' ? C.red : '#8a857e';
+                  return (
+                    <tr key={s.seg}>
+                      <td>{s.seg}</td>
+                      <td style={{ color: C.green }}>{(s.sattva / tot * 100).toFixed(0)}%</td>
+                      <td style={{ color: C.red }}>{(s.rajas / tot * 100).toFixed(0)}%</td>
+                      <td>{(s.tamas / tot * 100).toFixed(0)}%</td>
+                      <td><span className="pill" style={{ background: dc + '18', color: dc }}>{dom}</span></td>
+                      <td>{s.alpha.toFixed(3)}</td>
+                      <td>{s.beta.toFixed(3)}</td>
+                      <td>{s.gyro_avg.toFixed(1)}°/s</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <div className="cd">

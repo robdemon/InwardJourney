@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import './scripts/chartSetup.js';
 import { parseMindMonitorCsv } from './scripts/csvParser.js';
-import { buildSession } from './scripts/metrics.js';
+import { buildSession, combineSessions } from './scripts/metrics.js';
 import { TAB_LIST } from './scripts/constants.js';
 import Header from './components/Header.jsx';
 import UploadZone from './components/UploadZone.jsx';
@@ -27,21 +27,33 @@ export default function App() {
   const [tab, setTab] = useState('yogic');
   const [status, setStatus] = useState({ message: '', loaded: false });
 
-  const onFile = async (file) => {
+  const onFiles = async (files) => {
     try {
-      setStatus({ message: `Parsing ${file.name}…`, loaded: false });
-      const parsed = await parseMindMonitorCsv(file);
-      const session = buildSession(parsed);
-      setSessions((prev) => [...prev, session]);
-      setCurrent(sessions.length);
-      setStatus({ message: `Loaded: ${session.label}`, loaded: true });
+      setStatus({ message: `Parsing ${files.length} file${files.length > 1 ? 's' : ''}…`, loaded: false });
+      const added = [];
+      for (const file of files) {
+        const parsed = await parseMindMonitorCsv(file);
+        added.push(buildSession(parsed));
+      }
+      setSessions((prev) => [...prev, ...added]);
+      setCurrent(0);
+      setStatus({
+        message: added.length === 1
+          ? `Loaded: ${added[0].label}`
+          : `Loaded ${added.length} sessions`,
+        loaded: true
+      });
     } catch (err) {
       console.error(err);
       setStatus({ message: `Error: ${err.message}`, loaded: false });
     }
   };
 
-  const active = sessions[current];
+  const viewSessions = useMemo(() => (
+    sessions.length > 1 ? [combineSessions(sessions), ...sessions] : sessions
+  ), [sessions]);
+
+  const active = viewSessions[current];
 
   const panel = useMemo(() => {
     if (!active) return null;
@@ -76,10 +88,10 @@ export default function App() {
   return (
     <div className="ctr">
       <Header />
-      <UploadZone onFile={onFile} status={status} />
-      {sessions.length > 0 && (
+      <UploadZone onFiles={onFiles} status={status} />
+      {viewSessions.length > 0 && (
         <>
-          <SessionBar sessions={sessions} current={current} onSelect={setCurrent} />
+          <SessionBar sessions={viewSessions} current={current} onSelect={setCurrent} />
           <TabBar active={tab} onSelect={setTab} />
           {active && <StatsRow session={active} />}
           <div>{panel}</div>

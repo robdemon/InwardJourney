@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useRef, useState, useEffect } from 'react';
+import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import { C } from '../../scripts/constants.js';
@@ -7,22 +7,16 @@ const BAND_META = [
   { key: 'delta', label: 'δ Delta', color: '#7048b8' },
   { key: 'theta', label: 'θ Theta', color: C.teal },
   { key: 'alpha', label: 'α Alpha', color: C.green },
-  { key: 'beta', label: 'β Beta', color: C.amber },
+  { key: 'beta',  label: 'β Beta',  color: C.amber },
   { key: 'gamma', label: 'γ Gamma', color: C.red }
 ];
 
 const ELECTRODES = [
-  { name: 'TP9',  pos: [-1.05,  0.10, -0.45], short: 'left temporal' },
-  { name: 'AF7',  pos: [-0.55,  0.95,  0.65], short: 'left frontal' },
-  { name: 'AF8',  pos: [ 0.55,  0.95,  0.65], short: 'right frontal' },
-  { name: 'TP10', pos: [ 1.05,  0.10, -0.45], short: 'right temporal' }
+  { name: 'TP9',  pos: [-1.05,  0.10, -0.45] },
+  { name: 'AF7',  pos: [-0.55,  0.95,  0.65] },
+  { name: 'AF8',  pos: [ 0.55,  0.95,  0.65] },
+  { name: 'TP10', pos: [ 1.05,  0.10, -0.45] }
 ];
-
-const clamp01 = (v) => Math.max(0, Math.min(1, v));
-
-function bandFromSegment(seg, band) {
-  return seg[band] ?? 0;
-}
 
 function Head() {
   return (
@@ -43,46 +37,64 @@ function Cortex() {
 }
 
 function Electrode({ pos, name, level, color, highlight }) {
-  const ref = useRef();
-  const glow = 0.18 + clamp01(level) * 0.5;
-  useFrame(({ clock }) => {
-    if (!ref.current) return;
-    const pulse = 1 + Math.sin(clock.elapsedTime * (2 + level * 6)) * 0.06 * clamp01(level);
-    ref.current.scale.setScalar(pulse);
+  const fieldRef = useRef();
+  const ringRef = useRef();
+  const smoothLevel = useRef(level);
+
+  useFrame(() => {
+    // Lerp toward current level each frame — no oscillation, just smooth convergence
+    smoothLevel.current += (level - smoothLevel.current) * 0.12;
+    const l = smoothLevel.current;
+    if (fieldRef.current) {
+      fieldRef.current.scale.setScalar(0.4 + l * 1.3);
+      fieldRef.current.material.opacity = 0.06 + l * 0.22;
+    }
+    if (ringRef.current) {
+      ringRef.current.material.emissiveIntensity = highlight ? 0.7 + l * 1.0 : 0.3 + l * 0.6;
+    }
   });
+
   return (
     <group position={pos}>
-      <mesh ref={ref}>
-        <sphereGeometry args={[glow, 24, 24]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={highlight ? 1.3 : 0.6}
-          transparent
-          opacity={0.78}
-        />
+      <mesh ref={fieldRef}>
+        <sphereGeometry args={[0.28, 16, 16]} />
+        <meshStandardMaterial color={color} transparent opacity={0.1} depthWrite={false} />
       </mesh>
-      <Text
-        position={[0, glow + 0.18, 0]}
-        fontSize={0.13}
-        color="#3a3632"
-        anchorX="center"
-        anchorY="bottom"
-      >
+      <mesh ref={ringRef} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.09, 0.025, 8, 24]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.5} />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[0.035, 8, 8]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.2} />
+      </mesh>
+      <Text position={[0, 0.32, 0]} fontSize={0.13} color="#3a3632" anchorX="center" anchorY="bottom">
         {name}
       </Text>
     </group>
   );
 }
 
-function Scene({ session, segIndex, band }) {
+// Advances segIndex once per second using the WebGL delta timer so playback is
+// always in sync with the render loop, avoiding JS-timer drift in Concurrent Mode.
+function PlaybackTimer({ playing, segCount, onAdvance }) {
+  const elapsed = useRef(0);
+  useFrame((_, delta) => {
+    if (!playing) { elapsed.current = 0; return; }
+    elapsed.current += delta;
+    if (elapsed.current >= 1.0) {
+      elapsed.current -= 1.0;
+      onAdvance();
+    }
+  });
+  return null;
+}
+
+function Scene({ session, segIndex, band, playing, onAdvance }) {
   const segs = session.segments;
   const seg = segs[Math.min(segIndex, segs.length - 1)];
   const meta = BAND_META.find((b) => b.key === band);
-
-  // For per-location fallback, we don't have AF7/AF8 band splits per segment,
-  // so drive overall magnitude from the segment band and light all four electrodes.
-  const mag = Math.min(1, Math.abs(bandFromSegment(seg, band)) * 6);
+  const mag = Math.min(1, Math.abs((seg[band] ?? 0)) * 6);
 
   return (
     <>
@@ -104,6 +116,7 @@ function Scene({ session, segIndex, band }) {
           }
         />
       ))}
+      <PlaybackTimer playing={playing} segCount={segs.length} onAdvance={onAdvance} />
       <OrbitControls enablePan={false} minDistance={3} maxDistance={7} />
     </>
   );
@@ -115,20 +128,13 @@ export default function BrainTab({ session }) {
   const [playing, setPlaying] = useState(false);
   const segs = session.segments;
 
-  useEffect(() => {
-    if (!playing) return;
-    const id = setInterval(() => {
-      setSegIndex((i) => {
-        const next = i + 1;
-        if (next >= segs.length) {
-          setPlaying(false);
-          return segs.length - 1;
-        }
-        return next;
-      });
-    }, 1200);
-    return () => clearInterval(id);
-  }, [playing, segs.length]);
+  const onAdvance = useCallback(() => {
+    setSegIndex((i) => {
+      const next = i + 1;
+      if (next >= segs.length) { setPlaying(false); return segs.length - 1; }
+      return next;
+    });
+  }, [segs.length]);
 
   const seg = segs[segIndex];
   const meta = BAND_META.find((b) => b.key === band);
@@ -143,8 +149,9 @@ export default function BrainTab({ session }) {
       <h2>3D Brain — Session Animation</h2>
       <div className="cd">
         <div className="desc">
-          Semi-transparent head with the four Muse S electrodes (TP9, AF7, AF8, TP10). Each electrode pulses with
-          the selected band’s magnitude for the current ~5-minute segment. Drag to orbit; scroll to zoom.
+          Semi-transparent head with the four Muse S electrodes (TP9, AF7, AF8, TP10) shown as ring markers.
+          Each electrode's activity field smoothly expands and brightens with the selected band's magnitude.
+          Drag to orbit; scroll to zoom.
         </div>
 
         <div className="brain-controls">
@@ -161,7 +168,11 @@ export default function BrainTab({ session }) {
             ))}
           </div>
           <div className="bc-play">
-            <button onClick={() => setPlaying((p) => !p)} className="sb" style={{ background: playing ? C.red : C.green, color: '#fff', borderColor: 'transparent' }}>
+            <button
+              onClick={() => setPlaying((p) => !p)}
+              className="sb"
+              style={{ background: playing ? C.red : C.green, color: '#fff', borderColor: 'transparent' }}
+            >
               {playing ? '⏸ Pause' : '▶ Play'}
             </button>
           </div>
@@ -170,7 +181,13 @@ export default function BrainTab({ session }) {
         <div className="brain-scene">
           <Canvas camera={{ position: [0, 0.4, 4.2], fov: 50 }}>
             <Suspense fallback={null}>
-              <Scene session={session} segIndex={segIndex} band={band} />
+              <Scene
+                session={session}
+                segIndex={segIndex}
+                band={band}
+                playing={playing}
+                onAdvance={onAdvance}
+              />
             </Suspense>
           </Canvas>
         </div>
@@ -181,11 +198,14 @@ export default function BrainTab({ session }) {
             min="0"
             max={segs.length - 1}
             value={segIndex}
-            onChange={(e) => setSegIndex(Number(e.target.value))}
+            onChange={(e) => { setPlaying(false); setSegIndex(Number(e.target.value)); }}
             style={{ width: '100%' }}
           />
           <div className="bt-labels">
-            <span>Seg {seg.seg} · {seg.start}–{seg.end}m</span>
+            <span>
+              Seg {seg.seg} · {seg.start}–{seg.end}m
+              {seg.sourceLabel ? <span style={{ marginLeft: 6, color: 'var(--accent)' }}>· {seg.sourceLabel}</span> : null}
+            </span>
             <span className="pill" style={{ background: meta.color + '20', color: meta.color }}>
               {meta.label}: {(seg[band] ?? 0).toFixed(3)}
             </span>

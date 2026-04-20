@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
 
-export default function UploadZone({ onFile, status }) {
+export default function UploadZone({ onFiles, status }) {
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
-  const handleFile = (file) => {
-    if (file) onFile(file);
+  const handleFiles = (files) => {
+    const list = Array.from(files || []);
+    if (list.length) onFiles(list);
   };
 
   return (
@@ -20,19 +21,20 @@ export default function UploadZone({ onFile, status }) {
       onDrop={(e) => {
         e.preventDefault();
         setDragging(false);
-        handleFile(e.dataTransfer.files?.[0]);
+        handleFiles(e.dataTransfer.files);
       }}
     >
       <div className="emoji">🧠</div>
       <div className="label" style={{ fontSize: 15, color: 'var(--text)' }}>
-        {status?.message || 'Drop your Muse Mind Monitor CSV here, or click to browse'}
+        {status?.message || 'Drop one or more Muse Mind Monitor CSVs here, or click to browse'}
       </div>
-      <div className="hint">Accepts .csv exports • All processing happens in your browser</div>
+      <div className="hint">Accepts .csv exports • Select multiple files to stitch them into a combined timeline</div>
       <input
         ref={inputRef}
         type="file"
         accept=".csv"
-        onChange={(e) => handleFile(e.target.files?.[0])}
+        multiple
+        onChange={(e) => handleFiles(e.target.files)}
       />
     </div>
   );

@@ -5,23 +5,39 @@ import { sigmoid, clamp, pickMax } from './mathHelpers.js';
  * session-level summary. Operates on the normalised shape returned by
  * parseMindMonitorCsv().
  *
- * Segment window is ~5 min, matching the original Temp.html convention.
+ * Segment window is 1 second.
  */
+const SEG_WIN_MIN = 1 / 60; // 1 s expressed in minutes
+
 export function buildSession({ rows, events, t0, sourceName, firstDate }) {
-  if (!rows || rows.length < 10) {
-    throw new Error('Not enough data rows (need at least 10)');
+  if (!rows || rows.length < 2) {
+    throw new Error('Not enough data rows (need at least 2)');
   }
 
   const duration = rows[rows.length - 1].min;
   const blinks = events.filter((e) => e.event.includes('blink'));
   const jaws = events.filter((e) => e.event.includes('jaw'));
 
-  const nSeg = Math.max(1, Math.ceil(duration / 5));
-  const segSz = Math.floor(rows.length / nSeg);
+  // Group rows into 10-second time buckets
+  const buckets = [];
+  let bStart = rows[0].min;
+  let bucket = [];
+  for (const row of rows) {
+    if (row.min - bStart >= SEG_WIN_MIN && bucket.length > 0) {
+      buckets.push(bucket);
+      bStart = row.min;
+      bucket = [row];
+    } else {
+      bucket.push(row);
+    }
+  }
+  if (bucket.length > 0) buckets.push(bucket);
+
+  const nSeg = buckets.length;
   const segs = [];
 
   for (let i = 0; i < nSeg; i++) {
-    const sl = rows.slice(i * segSz, Math.min((i + 1) * segSz, rows.length));
+    const sl = buckets[i];
     const segAvg = (k) => sl.reduce((acc, r) => acc + (r[k] || 0), 0) / sl.length;
     const segStd = (k) => {
       const m = segAvg(k);
@@ -226,3 +242,73 @@ export function buildSession({ rows, events, t0, sourceName, firstDate }) {
 
 /** Convenience wrappers used across several tabs. */
 export const segMean = (segs, key) => segs.reduce((a, s) => a + s[key], 0) / segs.length;
+
+/**
+ * Stitch multiple per-CSV sessions into a single session-shaped object whose
+ * `segments[]` is the concatenated timeline. Each segment keeps its computed
+ * metrics; `start`/`end` are offset by cumulative duration so the timeline
+ * reads as one continuous run. Session-level scalars are duration-weighted.
+ *
+ * Returns the sole session unchanged when only one is supplied, so callers
+ * (tabs, charts) don't need to know whether they're looking at one CSV or many.
+ */
+export function combineSessions(sessions) {
+  if (!sessions?.length) return null;
+  if (sessions.length === 1) return sessions[0];
+
+  const allSegs = [];
+  const breaks = [0];
+  let tOffset = 0;
+  for (const s of sessions) {
+    for (const seg of s.segments) {
+      allSegs.push({
+        ...seg,
+        seg: allSegs.length + 1,
+        start: +(seg.start + tOffset).toFixed(1),
+        end: +(seg.end + tOffset).toFixed(1),
+        sourceLabel: s.label,
+        sourceDate: s.firstDate
+      });
+    }
+    tOffset += s.duration;
+    breaks.push(allSegs.length);
+  }
+
+  const totDur = sessions.reduce((a, s) => a + s.duration, 0) || 1;
+  const wAvg = (k) => sessions.reduce((a, s) => a + (s[k] || 0) * s.duration, 0) / totDur;
+  const bAvg = (k) => sessions.reduce((a, s) => a + (s.bands[k] || 0) * s.duration, 0) / totDur;
+  const hrMins = sessions.map((s) => s.hr_min).filter((h) => h > 0);
+  const hrMaxes = sessions.map((s) => s.hr_max).filter((h) => h > 0);
+
+  return {
+    label: `All sessions (${sessions.length})`,
+    firstDate: sessions[0].firstDate,
+    duration: +totDur.toFixed(1),
+    n_rows: sessions.reduce((a, s) => a + s.n_rows, 0),
+    blinks: sessions.reduce((a, s) => a + s.blinks, 0),
+    jaws: sessions.reduce((a, s) => a + s.jaws, 0),
+    blink_rate: +wAvg('blink_rate').toFixed(1),
+    hr_mean: +wAvg('hr_mean').toFixed(1),
+    hr_min: hrMins.length ? +Math.min(...hrMins).toFixed(1) : 0,
+    hr_max: hrMaxes.length ? +Math.max(...hrMaxes).toFixed(1) : 0,
+    bands: {
+      delta: +bAvg('delta').toFixed(4),
+      theta: +bAvg('theta').toFixed(4),
+      alpha: +bAvg('alpha').toFixed(4),
+      beta: +bAvg('beta').toFixed(4),
+      gamma: +bAvg('gamma').toFixed(4),
+      alpha_af7: +bAvg('alpha_af7').toFixed(4),
+      alpha_af8: +bAvg('alpha_af8').toFixed(4),
+      alpha_tp: +bAvg('alpha_tp').toFixed(4),
+      alpha_af: +bAvg('alpha_af').toFixed(4),
+      theta_af: +bAvg('theta_af').toFixed(4),
+      beta_af: +bAvg('beta_af').toFixed(4)
+    },
+    segments: allSegs,
+    beta_neg_pct: +wAvg('beta_neg_pct').toFixed(1),
+    gamma_neg_pct: +wAvg('gamma_neg_pct').toFixed(1),
+    isCombined: true,
+    sourceSessions: sessions,
+    sessionBreaks: breaks
+  };
+}

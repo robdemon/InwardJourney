@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Bar, Doughnut, Line, Radar } from 'react-chartjs-2';
 import { C, CHITTA_COLORS } from '../../scripts/constants.js';
 import { segMean } from '../../scripts/metrics.js';
@@ -6,6 +7,7 @@ import { chartOptions } from '../common/ChartWrapper.jsx';
 import InfoTip from '../common/InfoTip.jsx';
 
 export default function YogicStatesTab({ session }) {
+  const [journeyOpen, setJourneyOpen] = useState(false);
   const ss = session.segments;
   const ls = ss.map((s) => `Seg ${s.seg}`);
 
@@ -68,35 +70,43 @@ export default function YogicStatesTab({ session }) {
         </div>
 
         <div className="cd">
-          <h3><InfoTip label="Session Journey" tip="Each row is a ~5 min window showing dominant state, scores, and vitals." /></h3>
-          <table className="sgt">
-            <thead>
-              <tr>
-                <th>Seg</th><th>Time</th><th>State</th>
-                <th><InfoTip label="Ekāgra" tip="One-pointedness score." /></th>
-                <th><InfoTip label="MDS" tip="Meditation Depth Score." /></th>
-                <th><InfoTip label="Effort" tip="HR elevation from baseline." /></th>
-                <th>Blinks</th><th>HR</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ss.map((s) => {
-                const c = CHITTA_COLORS[s.dominant_chitta] || '#888';
-                return (
-                  <tr key={s.seg}>
-                    <td>{s.seg}</td>
-                    <td>{s.start}–{s.end}m</td>
-                    <td><span className="pill" style={{ background: c + '18', color: c }}>{s.dominant_chitta}</span></td>
-                    <td>{s.ekagra.toFixed(2)}</td>
-                    <td>{s.mds.toFixed(2)}</td>
-                    <td>{s.effort < 0.02 ? '\u2713' : s.effort.toFixed(2)}</td>
-                    <td>{s.blink_rate.toFixed(1)}/m</td>
-                    <td>{s.hr_avg}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <h3
+            onClick={() => setJourneyOpen((o) => !o)}
+            style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <InfoTip label="Session Journey" tip="Each row is a 1-second window showing dominant state, scores, and vitals." />
+            <span style={{ fontSize: 18, color: 'var(--dim)', lineHeight: 1 }}>{journeyOpen ? '▲' : '▼'}</span>
+          </h3>
+          {journeyOpen && (
+            <table className="sgt">
+              <thead>
+                <tr>
+                  <th>Seg</th><th>Time</th><th>State</th>
+                  <th><InfoTip label="Ekāgra" tip="One-pointedness score." /></th>
+                  <th><InfoTip label="MDS" tip="Meditation Depth Score." /></th>
+                  <th><InfoTip label="Effort" tip="HR elevation from baseline." /></th>
+                  <th>Blinks</th><th>HR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ss.map((s) => {
+                  const c = CHITTA_COLORS[s.dominant_chitta] || '#888';
+                  return (
+                    <tr key={s.seg}>
+                      <td>{s.seg}</td>
+                      <td>{s.start}–{s.end}m</td>
+                      <td><span className="pill" style={{ background: c + '18', color: c }}>{s.dominant_chitta}</span></td>
+                      <td>{s.ekagra.toFixed(2)}</td>
+                      <td>{s.mds.toFixed(2)}</td>
+                      <td>{s.effort < 0.02 ? '\u2713' : s.effort.toFixed(2)}</td>
+                      <td>{s.blink_rate.toFixed(1)}/m</td>
+                      <td>{s.hr_avg}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
