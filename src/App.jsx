@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import './scripts/chartSetup.js';
-import { parseMindMonitorCsv } from './scripts/csvParser.js';
+import { parseMindMonitorCsv, parseMindMonitorString } from './scripts/csvParser.js';
 import { buildSession, combineSessions } from './scripts/metrics.js';
 import { TAB_LIST } from './scripts/constants.js';
 import Header from './components/Header.jsx';
@@ -26,6 +26,23 @@ export default function App() {
   const [current, setCurrent] = useState(0);
   const [tab, setTab] = useState('yogic');
   const [status, setStatus] = useState({ message: '', loaded: false });
+
+  const loadSample = async () => {
+    try {
+      setStatus({ message: 'Loading sample session…', loaded: false });
+      const res = await fetch(import.meta.env.BASE_URL + 'sample.csv');
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      const text = await res.text();
+      const parsed = parseMindMonitorString(text, 'Sample — 2026-03-25');
+      const session = buildSession(parsed);
+      setSessions([session]);
+      setCurrent(0);
+      setStatus({ message: `Loaded: ${session.label}`, loaded: true });
+    } catch (err) {
+      console.error(err);
+      setStatus({ message: `Error: ${err.message}`, loaded: false });
+    }
+  };
 
   const onFiles = async (files) => {
     try {
@@ -88,7 +105,7 @@ export default function App() {
   return (
     <div className="ctr">
       <Header />
-      <UploadZone onFiles={onFiles} status={status} />
+      <UploadZone onFiles={onFiles} onSample={loadSample} status={status} />
       {viewSessions.length > 0 && (
         <>
           <SessionBar sessions={viewSessions} current={current} onSelect={setCurrent} />

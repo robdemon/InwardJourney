@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 
-export default function UploadZone({ onFiles, status }) {
+export default function UploadZone({ onFiles, onSample, status }) {
   const inputRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
@@ -29,6 +29,13 @@ export default function UploadZone({ onFiles, status }) {
         {status?.message || 'Drop one or more Muse Mind Monitor CSVs here, or click to browse'}
       </div>
       <div className="hint">Accepts .csv exports • Select multiple files to stitch them into a combined timeline</div>
+      <button
+        className="sb"
+        onClick={(e) => { e.stopPropagation(); onSample(); }}
+        style={{ marginTop: 12, padding: '8px 20px', fontSize: 13 }}
+      >
+        ⚡ Load Sample Data
+      </button>
       <input
         ref={inputRef}
         type="file"
