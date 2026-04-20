@@ -128,11 +128,11 @@ export default function SamkhyaTab({ session }) {
           <div className="g2">
             <div>
               <div className="pp-stack">
-                <PPRow icon="\u2727" name="Puruṣa" sub="Pure consciousness — the witness. Not measurable, inferred from Prakṛti quieting." color={C.purple} val="∞" note="Beyond EEG" bg="linear-gradient(90deg,#f0eaf8,#faf8f4)" />
-                <PPRow icon="\u25c9" name="Buddhi" sub="Discriminative intelligence. α coherence + β suppression." color={C.blue} val={buddhi.toFixed(2)} bar={buddhi * 100} />
-                <PPRow icon="\u25ce" name="Ahaṃkāra" sub="Ego-sense. Measured by β activity." color={C.amber} val={ahankara.toFixed(2)} bar={ahankara * 100} />
-                <PPRow icon="\u25cb" name="Manas" sub="Sensory mind. Blink rate + γ processing." color={C.teal} val={manas.toFixed(2)} bar={manas * 100} />
-                <PPRow icon="\u25e6" name="5 Jñānendriyas + 5 Tanmātras" sub="Sense organs and subtle elements. Pratyāhāra score indicates withdrawal." color="var(--dim)" val={pratyahara_mean.toFixed(2)} bar={pratyahara_mean * 100} bg="#faf8f4" />
+                <PPRow icon="✧" name="Puruṣa" sub="Pure consciousness — the witness. Not measurable, inferred from Prakṛti quieting." color={C.purple} val="∞" note="Beyond EEG" bg="linear-gradient(90deg,#f0eaf8,#faf8f4)" />
+                <PPRow icon="◉" name="Buddhi" sub="Discriminative intelligence. α coherence + β suppression." color={C.blue} val={buddhi.toFixed(2)} bar={buddhi * 100} />
+                <PPRow icon="◎" name="Ahaṃkāra" sub="Ego-sense. Measured by β activity." color={C.amber} val={ahankara.toFixed(2)} bar={ahankara * 100} />
+                <PPRow icon="○" name="Manas" sub="Sensory mind. Blink rate + γ processing." color={C.teal} val={manas.toFixed(2)} bar={manas * 100} />
+                <PPRow icon="◦" name="5 Jñānendriyas + 5 Tanmātras" sub="Sense organs and subtle elements. Pratyāhāra score indicates withdrawal." color="var(--dim)" val={pratyahara_mean.toFixed(2)} bar={pratyahara_mean * 100} bg="#faf8f4" />
               </div>
             </div>
             <div>
