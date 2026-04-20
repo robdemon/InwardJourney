@@ -13,8 +13,9 @@ export default function PatanjaliTab({ session }) {
   const ss = session.segments;
   const ls = ss.map((s) => `Seg ${s.seg}`);
   const avgEff = segMean(ss, 'effort');
-  const hasDhy = ss.some((s) => s.dhyana > 0.3);
-  const dhyanaSegs = ss.filter((s) => s.dhyana > 0.3).map((s) => s.seg);
+  const dhyanaCount = ss.filter((s) => s.dhyana > 0.3).length;
+  const hasDhy = dhyanaCount > 0;
+  const dhyanaPct = ((dhyanaCount / ss.length) * 100).toFixed(0);
 
   return (
     <>
@@ -76,10 +77,10 @@ export default function PatanjaliTab({ session }) {
             })}
           </div>
           <div className="ins" style={{ borderLeftColor: C.green }}>
-            Primary: <strong>{avgEff < 0.05 ? 'Dhyāna' : 'Dhāraṇā'}</strong> (effort: {avgEff.toFixed(3)}).{' '}
+            Primary limb: <strong>{avgEff < 0.05 ? 'Dhyāna' : 'Dhāraṇā'}</strong> — avg HR effort {(avgEff * 100).toFixed(0)}%.{' '}
             {hasDhy
-              ? <><strong style={{ color: C.purple }}>Dhyāna</strong> in segments {dhyanaSegs.join(', ')}.</>
-              : 'Dhyāna not yet stable.'}
+              ? <><strong style={{ color: C.purple }}>Dhyāna</strong> present in {dhyanaPct}% of segments ({dhyanaCount}/{ss.length}).</>
+              : 'Dhyāna not yet stable this session.'}
           </div>
         </div>
 
@@ -98,6 +99,16 @@ export default function PatanjaliTab({ session }) {
               }}
               options={chartOptions('line')}
             />
+          </div>
+          <div style={{ display: 'flex', gap: 20, marginTop: 10, font: '400 11px DM Sans', color: 'var(--dim)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="24" height="8"><line x1="0" y1="4" x2="24" y2="4" stroke="#888" strokeWidth="2" /></svg>
+              <strong>Solid line</strong> — inner limb (Dhāraṇā, Dhyāna, Savitarka): directly measurable from EEG
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="24" height="8"><line x1="0" y1="4" x2="24" y2="4" stroke="#888" strokeWidth="2" strokeDasharray="5,4" /></svg>
+              <strong>Dotted line</strong> — Pratyāhāra: transitional limb bridging outer practice and inner absorption
+            </span>
           </div>
         </div>
       </div>
